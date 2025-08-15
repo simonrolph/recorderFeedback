@@ -42,8 +42,12 @@ knitr::kable(head(read.csv(config$recipients_file)))
 rf_get_data()
 knitr::kable(head(read.csv(config$data_file)))
 
+#verify the data is all good
+rf_verify_data(T)
+
 #render a single feedback item
 rf_render_single(recipient_id = 1)
+
 
 # run the pipeline
 batch_id <- "test_batch"
@@ -53,7 +57,12 @@ rf_generate(batch_id)
 meta_table <- read.csv(file.path("renders",batch_id,"/meta_table.csv"))
 knitr::kable(head(meta_table))
 
-#look at the contents of one of the renders
+#verify the batch
+rf_verify_batch(batch_id)
+#view content
+#rf_view_content(batch_id = batch_id,recipient_id = 3)
+
+#peer into the contents of one of the renders
 print(readLines(meta_table$file[1]))
 
 #send the emails
@@ -109,4 +118,5 @@ print(readLines(meta_table$file[1]))
 ```{r cleanup, echo = FALSE}
 setwd("C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback")
 unlink("example", recursive=TRUE)
+unlink("example")
 ```

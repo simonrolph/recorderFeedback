@@ -1,7 +1,7 @@
 
 # recorderFeedback
 
-**recorderFeedback** is an R package for generating personalized,
+**recorderFeedback** is an R package for generating personalised,
 data-driven feedback, originally designed for citizen science wildlife
 recording but adaptable to other domains. The package provides tools to
 set up a feedback workflow, load data, generate content, and distribute
@@ -9,13 +9,13 @@ feedback to recipients.
 
 ## Features
 
-- **Project Initialization**: Quickly scaffold a new feedback project
+- **Project Initialisation**: Quickly scaffold a new feedback project
   with all necessary files and folders.
 - **Data Loading**: Import recipient and observation data from
   configurable sources.
 - **Computation**: Run custom analyses or summaries on your data before
   generating feedback.
-- **Content Rendering**: Create personalized feedback documents for each
+- **Content Rendering**: Create personalised feedback documents for each
   recipient using RMarkdown templates.
 - **Batch Processing**: Automate feedback generation for multiple
   recipients.
@@ -40,15 +40,19 @@ library(recorderFeedback)
 rf_init(path = "example")
 ```
 
-    ## Folder already exists: example/data
+    ## Created folder: example/data
 
-    ## Folder already exists: example/templates
+    ##   Added .gitignore to: example/data
 
-    ## Folder already exists: example/renders
+    ## Created folder: example/templates
 
-    ## Folder already exists: example/scripts
+    ## Created folder: example/renders
 
-    ## Folder already exists: example/scripts/extras
+    ## Created folder: example/scripts
+
+    ## Created folder: example/scripts/extras
+
+    ##   Added .gitignore to: example/scripts/extras
 
     ## Working directory set to: C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback/example
 
@@ -94,6 +98,17 @@ knitr::kable(head(read.csv(config$data_file)))
 |            1 | 53.07644 |  0.5836285 | Vulpes vulpes       | Red Fox            |
 
 ``` r
+#verify the data is all good
+rf_verify_data(T)
+```
+
+    ## Number of data records: 20
+
+    ## Number of recipients: 5
+
+    ## Data and recipients verification complete: no blocking errors found.
+
+``` r
 #render a single feedback item
 rf_render_single(recipient_id = 1)
 ```
@@ -107,7 +122,7 @@ rf_generate(batch_id)
 ```
 
     ## + template_file dispatched
-    ## ✔ template_file completed [1.8s, 796 B]
+    ## ✔ template_file completed [330ms, 796 B]
     ## + html_template_file dispatched
     ## ✔ html_template_file completed [0ms, 2.28 kB]
     ## + recipients_target dispatched
@@ -115,17 +130,17 @@ rf_generate(batch_id)
     ## + raw_data_file dispatched
     ## ✔ raw_data_file completed [0ms, 1.39 kB]
     ## + computation_file dispatched
-    ## ✔ computation_file completed [0ms, 49 B]
+    ## ✔ computation_file completed [0ms, 262 B]
     ## + computation_file_focal dispatched
-    ## ✔ computation_file_focal completed [0ms, 49 B]
+    ## ✔ computation_file_focal completed [0ms, 262 B]
     ## + raw_data dispatched
     ## ✔ raw_data completed [0ms, 605 B]
     ## + bg_computed_objects dispatched
-    ## ✔ bg_computed_objects completed [0ms, 44 B]
+    ## ✔ bg_computed_objects completed [20ms, 44 B]
     ## + recipient_objects_1 dispatched
     ## ✔ recipient_objects_1 completed [0ms, 378 B]
     ## + recipient_objects_2 dispatched
-    ## ✔ recipient_objects_2 completed [20ms, 412 B]
+    ## ✔ recipient_objects_2 completed [0ms, 412 B]
     ## + recipient_objects_3 dispatched
     ## ✔ recipient_objects_3 completed [0ms, 407 B]
     ## + recipient_objects_4 dispatched
@@ -135,13 +150,13 @@ rf_generate(batch_id)
     ## + data_story_content_1 dispatched
     ## ✔ data_story_content_1 completed [1.1s, 3.39 kB]
     ## + data_story_content_2 dispatched
-    ## ✔ data_story_content_2 completed [770ms, 3.53 kB]
+    ## ✔ data_story_content_2 completed [790ms, 3.53 kB]
     ## + data_story_content_3 dispatched
-    ## ✔ data_story_content_3 completed [820ms, 3.54 kB]
+    ## ✔ data_story_content_3 completed [940ms, 3.54 kB]
     ## + data_story_content_4 dispatched
-    ## ✔ data_story_content_4 completed [860ms, 3.53 kB]
+    ## ✔ data_story_content_4 completed [1.2s, 3.53 kB]
     ## + data_story_content_5 dispatched
-    ## ✔ data_story_content_5 completed [780ms, 3.52 kB]
+    ## ✔ data_story_content_5 completed [1.2s, 3.52 kB]
     ## + meta_data_1 dispatched
     ## ✔ meta_data_1 completed [0ms, 172 B]
     ## + meta_data_2 dispatched
@@ -154,7 +169,7 @@ rf_generate(batch_id)
     ## ✔ meta_data_5 completed [0ms, 174 B]
     ## + meta_table dispatched
     ## ✔ meta_table completed [20ms, 653 B]
-    ## ✔ ended pipeline [8.2s, 24 completed, 0 skipped]
+    ## ✔ ended pipeline [7.2s, 24 completed, 0 skipped]
     ## Warning messages:
     ## 1: package 'targets' was built under R version 4.5.1 
     ## 2: package 'tarchetypes' was built under R version 4.5.1 
@@ -177,7 +192,17 @@ knitr::kable(head(meta_table))
 | 5 | renders/test_batch/content_5_2025-08-15.html | test_batch8x65335n14ojgtxe | <eve@example.com> | Eve | test_batch |
 
 ``` r
-#look at the contents of one of the renders
+#verify the batch
+rf_verify_batch(batch_id)
+```
+
+    ## Batch verification complete: no blocking errors found.
+
+``` r
+#view content
+#rf_view_content(batch_id = batch_id,recipient_id = 3)
+
+#peer into the contents of one of the renders
 print(readLines(meta_table$file[1]))
 ```
 
@@ -292,7 +317,7 @@ print(readLines(meta_table$file[1]))
     ## [109] "</tr>"                                                                                                                                                         
     ## [110] "</table>"                                                                                                                                                      
     ## [111] "<div class=\"footer\" style=\"font-family:Helvetica, sans-serif;color:#999999;font-size:12px;font-weight:normal;margin:24px 0 0 0;\">"                         
-    ## [112] "<p>This message was generated for  on 2025-08-15 16:07:06 BST.</p>"                                                                                            
+    ## [112] "<p>This message was generated for  on 2025-08-15 17:07:59 BST.</p>"                                                                                            
     ## [113] ""                                                                                                                                                              
     ## [114] "</div>"                                                                                                                                                        
     ## [115] "</td>"                                                                                                                                                         
@@ -308,12 +333,12 @@ print(readLines(meta_table$file[1]))
 
 ## Workflow Overview
 
-1.  **Initialize Project**: Use `rf_init()` to create a new project
+1.  **Initialise Project**: Use `rf_init()` to create a new project
     structure.
 2.  **Configure**: Edit the configuration file to set paths and options.
 3.  **Load Data**: Import recipients and data using provided functions.
 4.  **Compute**: Optionally process data for summaries or statistics.
-5.  **Render Feedback**: Generate personalized feedback documents.
+5.  **Render Feedback**: Generate personalised feedback documents.
 6.  **Distribute**: Send feedback via email or other channels.
 
 ## Key terms:

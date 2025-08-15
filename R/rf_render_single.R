@@ -3,9 +3,10 @@
 #' Generates feedback for one recipient using their data.
 #'
 #' @param recipient_id Integer or character. ID of the recipient.
+#' @param view Logical. Whether to show the content in the viewer.
 #' @return Path to rendered file.
 #' @export
-rf_render_single <- function(recipient_id){
+rf_render_single <- function(recipient_id,view = F){
 
   config <- config::get()
   batch_id <- "singles"
@@ -33,11 +34,19 @@ rf_render_single <- function(recipient_id){
        config = config,
        extra_params = dplyr::select(recipient,-name,-email))
 
-  rf_render_content(
+  rendered_file <- rf_render_content(
     template_file = config$content_template_file,
     params,
     recipient_id = recipient_id,
     batch_id = batch_id,
     template_html = file.path(getwd(),config$html_template_file)
   )
+
+  # Open in default browser or RStudio viewer
+  if(view==T){
+    utils::browseURL(rendered_file)
+  }
+
+
+  rendered_file
 }
