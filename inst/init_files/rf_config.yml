@@ -1,0 +1,22 @@
+default:
+  test_mode: True
+  recipients_file: "data/recipients.csv"
+  recipients_script: "scripts/get_recipients.R"
+  data_file: "data/data.csv"
+  data_script: "scripts/get_data.R"
+  computation_script_bg: "scripts/computation.R"
+  computation_script_focal: "scripts/computation.R"
+  content_template_file: "templates/content.Rmd"
+  html_template_file: "templates/template.html"
+  pandoc_path: ""
+  mail_server: ""
+  mail_port: 587
+  mail_use_tls: True
+  mail_use_ssl: True
+  mail_username: 'test@test.com'
+  mail_password: ''
+  mail_sender: 'test@test.com'
+  mail_name: 'Recorder Feedback'
+  mail_subject: "Your feedback"
+  mail_creds: "anonymous"
+  mail_test_recipient: 'test@test.com'

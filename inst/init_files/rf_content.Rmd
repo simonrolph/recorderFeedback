@@ -1,0 +1,36 @@
+---
+title: "Recorder Feedback Example Email"
+params:
+    recipient_name: ""
+    recipient_email: "UNKNOWN"
+    focal_data: ""
+    bg_data: ""
+    focal_computed_objects: ""
+    bg_computed_objects: ""
+    content_key: ""
+    config: ""
+    extra_params: ""
+footer-date-time: "`r  format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`"
+recipient-email: "`r params$recipient_email`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,
+                      warning = F,
+                      message = FALSE, 
+                      fig.align = 'center',
+                      error=F,
+                      results='asis')
+```
+
+
+# Hello `r params$recipient_name`!
+
+Look at your data:
+
+```{r}
+knitr::kable(params$focal_data)
+```
+
+Best wishes,
+recorderFeedback

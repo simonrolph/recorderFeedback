@@ -1,0 +1,22 @@
+Package: recorderFeedback
+Type: Package
+Title: Generating personalised, data-driven feedback
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Simon", "Rolph",
+      email = "simrol@ceh.ac.uk",
+      role = c("aut", "cre")
+    )
+  )
+Description: An R package for generating personalised, data-driven feedback. Tools to set up a feedback workflow, load data, generate content, and distribute feedback to recipients.
+License: OGL
+Encoding: UTF-8
+LazyData: true
+Imports:
+    dplyr,
+    targets,
+    rmarkdown,
+    yaml,
+    blastula,
+    knitr

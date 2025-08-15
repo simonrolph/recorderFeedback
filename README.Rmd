@@ -1,0 +1,112 @@
+---
+output: github_document
+---
+
+# recorderFeedback
+
+**recorderFeedback** is an R package for generating personalised, data-driven feedback, originally designed for citizen science wildlife recording but adaptable to other domains. The package provides tools to set up a feedback workflow, load data, generate content, and distribute feedback to recipients.
+
+## Features
+
+- **Project Initialisation**: Quickly scaffold a new feedback project with all necessary files and folders.
+- **Data Loading**: Import recipient and observation data from configurable sources.
+- **Computation**: Run custom analyses or summaries on your data before generating feedback.
+- **Content Rendering**: Create personalised feedback documents for each recipient using RMarkdown templates.
+- **Batch Processing**: Automate feedback generation for multiple recipients.
+- **Email Dispatch**: Send feedback via email using SMTP.
+
+Package functions are prefixed with `rf_`.
+
+## Installation
+
+Install from GitHub using `devtools`:
+
+```r
+devtools::install_github("yourusername/recorderFeedback")
+```
+
+## Quick Start
+
+```{r quick_start}
+library(recorderFeedback)
+
+#initialise a new project
+rf_init(path = "example")
+config <- config::get()
+
+#get recipients
+rf_get_recipients()
+knitr::kable(head(read.csv(config$recipients_file)))
+
+#get data
+rf_get_data()
+knitr::kable(head(read.csv(config$data_file)))
+
+#render a single feedback item
+rf_render_single(recipient_id = 1)
+
+# run the pipeline
+batch_id <- "test_batch"
+rf_generate(batch_id)
+
+#view the meta table
+meta_table <- read.csv(file.path("renders",batch_id,"/meta_table.csv"))
+knitr::kable(head(meta_table))
+
+#look at the contents of one of the renders
+print(readLines(meta_table$file[1]))
+
+#send the emails
+#rf_dispatch_smtp(batch_id)
+```
+
+## Workflow Overview
+
+1. **Initialise Project**: Use `rf_init()` to create a new project structure.
+2. **Configure**: Edit the configuration file to set paths and options.
+3. **Load Data**: Import recipients and data using provided functions.
+4. **Compute**: Optionally process data for summaries or statistics.
+5. **Render Feedback**: Generate personalised feedback documents.
+6. **Distribute**: Send feedback via email or other channels.
+
+## Key terms:
+
+ - Recipient: someone to receive feedback
+ - Focal/background: whether the data relates to the recipient (focal), or not (background)
+ - Template: a RMarkdown document defining how the data is manipulated and visualised
+ - Computations: calculations or other processing done on the raw data prior to rendering them template
+
+## Configuration
+
+### General
+
+`config.yml`
+
+### Data sources (recipients)
+
+`scripts/get_recipients.R`
+
+### Data sources (records)
+
+`scripts/get_data.R`
+
+### Content (R)
+
+`templates/content.Rmd`
+`templates/email_format.R`
+
+### Look and feel (HTML+CSS)
+
+`templates/template.html`
+
+
+### Pipeline
+
+`_targets.R`
+`run_pipeline.R`
+
+
+```{r cleanup, echo = FALSE}
+setwd("C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback")
+unlink("example", recursive=TRUE)
+```
