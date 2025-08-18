@@ -1,0 +1,79 @@
+---
+title: "Generating Content"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Generating Content}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=FALSE
+)
+```
+
+```{r setup}
+library(recorderFeedback)
+```
+
+# Generating Content
+
+This vignette describes how **recorderFeedback** generates personalised feedback content, including how computations are integrated into the workflow.
+
+## Configuration
+
+Content generation is controlled by your project's configuration file, `config.yml`. Key entries include:
+
+- `computation_script_focal`: Script for computations on focal (recipient-specific) data.
+- `computation_script_bg`: Script for background computations.
+- `content_template_file`: RMarkdown template for rendering feedback.
+- `html_template_file`: HTML template for styling output.
+
+By default, both computation scripts point to `"scripts/computation.R"`, but you can specify different scripts if needed.
+
+## Computations
+
+During the content generation pipeline, you can run custom computations on your data. These scripts (referenced in `computation_script_focal` and `computation_script_bg`) allow you to summarise, analyse, or transform your data as required.
+
+```{r run_computations}
+# Run computations for focal and background data
+rf_do_computations()
+```
+
+You can customise the computation scripts to suit your analysis needs. For example, you might calculate summary statistics, generate plots, or prepare tables for inclusion in feedback.
+
+## Rendering Content
+
+Content is generated using the template specified in `content_template_file` (an RMarkdown file). The function `rf_render_single()` creates feedback for a specific recipient, while `rf_generate()` processes a batch.
+
+```{r render_single}
+# Render feedback for a single recipient
+rf_render_single(recipient_id = 1)
+```
+
+For batch processing:
+
+```{r generate_batch}
+batch_id <- "example_batch"
+rf_generate(batch_id)
+```
+
+## Customising Templates
+
+- **RMarkdown template** (`templates/content.Rmd`): Defines the structure and appearance of the feedback document. You can edit this to include custom text, tables, plots, and computed results.
+- **HTML template** (`templates/template.html`): Controls the look and feel of the final output.
+
+## Viewing and Verifying Output
+
+After generation, you can view and verify the content:
+
+```{r view_content}
+rf_view_content(batch_id = batch_id, recipient_id = 1)
+```
+
+```{r verify_batch}
+rf_verify_batch(batch_id)
+```

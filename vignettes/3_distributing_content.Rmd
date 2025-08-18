@@ -1,0 +1,68 @@
+---
+title: "Distributing Content"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Distributing Content}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=FALSE
+)
+```
+
+```{r setup}
+library(recorderFeedback)
+```
+
+# Distributing Content
+
+This vignette describes how **recorderFeedback** distributes generated feedback to recipients.
+
+## Configuration
+
+Distribution settings are managed in your project's `config.yml` file. Key entries include:
+
+- `mail_server`: SMTP server address.
+- `mail_port`: SMTP port (default: 587).
+- `mail_use_tls` / `mail_use_ssl`: Security options for email.
+- `mail_username`, `mail_password`: Credentials for authentication.
+- `mail_sender`, `mail_name`: Sender details.
+- `mail_subject`: Subject line for feedback emails.
+- `mail_test_recipient`: Address for test emails.
+
+## Dispatching Feedback
+
+After generating feedback content, use `rf_dispatch_smtp()` to send emails to recipients. This function uses the configuration above to connect to your mail server and distribute feedback.
+
+```{r dispatch_feedback, eval=FALSE}
+batch_id <- "example_batch"
+rf_dispatch_smtp(batch_id)
+```
+
+You can test your email setup by sending to the address specified in `mail_test_recipient` before distributing to all recipients.
+
+## Customising Email Content
+
+- **Email formatting** is controlled by the template specified in `content_template_file` and `html_template_file` in `rf_config.yml`.
+- **Email body and attachments** are generated for each recipient using these templates.
+
+## Verifying Distribution
+
+After dispatch, you can verify which emails were sent and check for any errors:
+
+```{r verify_batch}
+rf_verify_batch(batch_id)
+```
+
+## Summary
+
+- Email distribution is fully configurable via `rf_config.yml`.
+- Use `rf_dispatch_smtp()` to send feedback to recipients.
+- Test and verify your setup before full distribution.
+
+This approach ensures your feedback reaches recipients efficiently and

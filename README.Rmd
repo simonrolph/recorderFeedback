@@ -27,6 +27,27 @@ devtools::install_github("yourusername/recorderFeedback")
 
 ## Quick Start
 
+When you initialise a project with `rf_init()`, files are copied to set up your workflow, ensuring you have all the necessary templates, scripts, and configuration to get started quickly.
+
+ * `config.yml`: The central configuration file referenced in the README, where you set paths and options for your project.
+ * `scripts/computation.R`, `scripts/get_data.R`, `scripts/get_recipients.R`: Scripts for loading data, recipients, and running computations, matching the workflow steps outlined in the README.
+ * `templates/content.Rmd`, `templates/email_format.R`, `templates/template.html`: Templates for rendering the feedback and formatting emails
+ * `run_pipeline.R`, `_targets.R`: Pipeline orchestration scripts, supporting batch processing and automation
+ 
+This diagram attempts to explain how it fits together:
+ 
+```mermaid
+graph TD
+    A[Data source] --> |"rf_get_recipients()<br>config$recipients_script" | B["Recipient data (.csv)"<br>config$recipient_file]
+    C[Data source] --> |"rf_get_data()<br>config$data_script" | D["Records data(.csv)"<br>config$data_file]
+    F["Templates<br>config$content_template_file<br>config$html_template_file"] --> E
+    H["Computation scripts<br>config$computation_script_focal<br>config$computation_script_background"] --> E
+    B --> E("{Targets} pipeline<br>_targets.R")
+    D --> E
+    E --> |"rf_generate()"| G[Batch content and meta data<br>.html files]
+    G --> |"rf_dispatch_smtp()"| J[Feedback received by recipients]
+```
+
 ```{r quick_start}
 library(recorderFeedback)
 
@@ -48,7 +69,6 @@ rf_verify_data(T)
 #render a single feedback item
 rf_render_single(recipient_id = 1)
 
-
 # run the pipeline
 batch_id <- "test_batch"
 rf_generate(batch_id)
@@ -61,9 +81,6 @@ knitr::kable(head(meta_table))
 rf_verify_batch(batch_id)
 #view content
 #rf_view_content(batch_id = batch_id,recipient_id = 3)
-
-#peer into the contents of one of the renders
-print(readLines(meta_table$file[1]))
 
 #send the emails
 #rf_dispatch_smtp(batch_id)
@@ -84,35 +101,6 @@ print(readLines(meta_table$file[1]))
  - Focal/background: whether the data relates to the recipient (focal), or not (background)
  - Template: a RMarkdown document defining how the data is manipulated and visualised
  - Computations: calculations or other processing done on the raw data prior to rendering them template
-
-## Configuration
-
-### General
-
-`config.yml`
-
-### Data sources (recipients)
-
-`scripts/get_recipients.R`
-
-### Data sources (records)
-
-`scripts/get_data.R`
-
-### Content (R)
-
-`templates/content.Rmd`
-`templates/email_format.R`
-
-### Look and feel (HTML+CSS)
-
-`templates/template.html`
-
-
-### Pipeline
-
-`_targets.R`
-`run_pipeline.R`
 
 
 ```{r cleanup, echo = FALSE}

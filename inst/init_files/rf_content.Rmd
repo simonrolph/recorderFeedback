@@ -23,6 +23,12 @@ knitr::opts_chunk$set(echo = F,
                       results='asis')
 ```
 
+```{r, eval=FALSE}
+# These R chunks is where you define the content of your email.
+# Load in the params object, which contains all the R objects passed to the email:
+# e,g. params$focal_data, params$bg_data, etc.
+# You can use params$recipient_name, params$recipient_email, etc. to personalise the email.
+```
 
 # Hello `r params$recipient_name`!
 
@@ -30,6 +36,12 @@ Look at your data:
 
 ```{r}
 knitr::kable(params$focal_data)
+```
+
+Computed objects from the focal data:
+
+```{r}
+params$focal_computed_objects
 ```
 
 Best wishes,

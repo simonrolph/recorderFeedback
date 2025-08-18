@@ -5,3 +5,7 @@
 .Rbuildignore
 
 nothing
+docs
+inst/doc
+/doc/
+/Meta/

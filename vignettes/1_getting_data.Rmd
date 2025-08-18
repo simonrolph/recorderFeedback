@@ -1,0 +1,56 @@
+---
+title: "Getting Data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval=FALSE
+)
+```
+
+```{r setup}
+library(recorderFeedback)
+```
+
+# Getting Data
+
+This vignette explains how **recorderFeedback** loads recipient and observation data, and how you can configure and extend these steps for your own workflow.
+
+## Configuration
+
+All data sources are defined in your project's configuration file, `config.yml`, which is copied to your project during initialisation. The relevant entries are:
+
+- `recipients_file`: Path to your recipients data (e.g., `"data/recipients.csv"`).
+- `recipients_script`: Script for loading recipients (e.g., `"scripts/get_recipients.R"`).
+- `data_file`: Path to your records/observations data (e.g., `"data/data.csv"`).
+- `data_script`: Script for loading records (e.g., `"scripts/get_data.R"`).
+
+You can customise these paths and scripts to suit your data sources.
+
+## Loading Recipients
+
+The function `rf_get_recipients()` loads recipient data using the script specified in `recipients_script`. By default, this script reads from the file defined in `recipients_file`.
+
+```{r get_recipients}
+config <- config::get()
+rf_get_recipients()
+recipients <- read.csv(config$recipients_file)
+knitr::kable(head(recipients))
+```
+
+## Loading Records
+
+Similarly, `rf_get_data()` loads observation data using the script specified in `data_script`, reading from the file defined in `data_file`.
+
+```{r get_data}
+rf_get_data()
+records <- read.csv(config$data_file)
+knitr::kable(head(records))
+```
