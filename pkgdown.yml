@@ -1,0 +1,11 @@
+pandoc: 3.1.11
+pkgdown: 2.1.3
+pkgdown_sha: ~
+articles:
+  1_getting_data: 1_getting_data.html
+  2_generating_content: 2_generating_content.html
+  3_distributing_content: 3_distributing_content.html
+last_built: 2025-08-18T13:49Z
+urls:
+  reference: https://simonrolph.github.io/recorderFeedback/reference
+  article: https://simonrolph.github.io/recorderFeedback/articles
