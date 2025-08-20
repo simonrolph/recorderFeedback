@@ -58,7 +58,7 @@ For batch processing:
 
 ```{r generate_batch}
 batch_id <- "example_batch"
-rf_generate(batch_id)
+rf_render_all(batch_id)
 ```
 
 ## Customising Templates

@@ -1,0 +1,223 @@
+---
+title: "Example: iNaturalist Summary"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example: iNaturalist Summary}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup1, include = FALSE}
+knitr::opts_chunk$set(
+  eval = FALSE,
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup2}
+library(recorderFeedback)
+library(dplyr)
+```
+
+# Overview
+
+This vignette demonstrates how to use **recorderFeedback** to fetch iNaturalist data for recipients, summarize it into personalized reports, and distribute the results via email. It walks through the full pipeline: setup, data collection, template creation, rendering, and distribution.
+
+# Setup
+
+Initialize a project directory and load configuration:
+
+```{r setup3}
+rf_init("inaturalist_example")
+config <- config::get()
+```
+
+This creates the working structure and loads the configuration settings defined in `config.yml`.
+
+# Getting data
+
+## Defining recipients
+
+Recipients are individuals for whom feedback reports will be generated.
+For this example, we manually define them in a script.
+
+**File: `scripts/get_recipients.R`**
+
+```{r get_recipients}
+# A script for getting recipients
+config <- config::get()
+df <- data.frame(
+  email = c("simon@example.com"),
+  name = c("Simon"),
+  recipient_id = c("1152941") # iNaturalist user ID
+)
+write.csv(df, config$recipients_file, row.names = FALSE)
+```
+
+Run the recipient script:
+
+```{r run_get_recipients, eval=FALSE}
+rf_get_recipients()
+```
+
+Inspect the recipients file:
+
+```{r view_recipients}
+read.csv(config$recipients_file)
+```
+
+## Collecting iNaturalist records
+
+We now pull iNaturalist observations for each recipient over the last 30 days.
+
+**File: `scripts/get_data.R`**
+
+```{r get_data_script}
+library(httr)
+library(jsonlite)
+
+get_inat_observations <- function(user_id) {
+  today <- Sys.Date()
+  start_date <- today - 30
+  
+  base_url <- "https://api.inaturalist.org/v1/observations"
+  query <- list(
+    user_id = user_id,
+    d1 = start_date,
+    d2 = today,
+    per_page = 30,
+    order = "desc",
+    order_by = "created_at"
+  )
+  
+  response <- GET(base_url, query = query)
+  stop_for_status(response)
+  
+  data <- content(response, as = "text", encoding = "UTF-8")
+  obs <- fromJSON(data, flatten = TRUE)
+  
+  output <- obs$results %>%
+    select(record_id = id,
+           recipient_id = user.id,
+           date = observed_on,
+           common_name = taxon.preferred_common_name,
+           scientific_name = taxon.name,
+           species_group = taxon.iconic_taxon_name)
+  
+  return(output)
+}
+
+recipients <- read.csv(config$recipients_file)
+observations <- data.frame()
+for (i in 1:nrow(recipients)) {
+  observations <- bind_rows(observations,
+                            get_inat_observations(recipients$recipient_id[i]))
+}
+
+write.csv(observations, config$data_file, row.names = FALSE)
+```
+
+Fetch and verify the data:
+
+```{r get_data, eval = FALSE}
+rf_get_data()
+```
+
+```{r verify_data}
+rf_verify_data(verbose = TRUE)
+```
+
+# Generating content
+
+## Creating a template
+
+We build a simple R Markdown template that generates a personalized summary for each recipient.
+
+The template includes:
+
+* Greeting with recipient name
+* Count of unique species recorded
+* A table of recent observations
+
+(This is rendered with a `print()` function because putting R markdown into R markdown is apparently hard without it getting confused.)
+
+````{r, eval = TRUE, echo = FALSE}
+lines <- c(
+  "---",
+  "title: \"iNaturalist Summary\"",
+  "params:",
+  "  recipient_name: \"\"",
+  "  recipient_email: \"UNKNOWN\"",
+  "  focal_data: \"\"",
+  "  bg_data: \"\"",
+  "  focal_computed_objects: \"\"",
+  "  bg_computed_objects: \"\"",
+  "  content_key: \"\"",
+  "  config: \"\"",
+  "  extra_params: \"\"",
+  "footer-date-time: \"`r format(Sys.time(), '%Y-%m-%d %H:%M:%S %Z')`\"",
+  "recipient-email: \"`r params$recipient_email`\"",
+  "---",
+  "",
+  "```{r setup, include=FALSE}",
+  "knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,",
+  "                      fig.align = 'center', error = FALSE, results = 'asis')",
+  "library(dplyr)",
+  "```",
+  "",
+  "# Hello `r params$recipient_name`!",
+  "",
+  "You have recorded `r length(unique(params$focal_data$scientific_name))` species recently!",
+  "",
+  "```{r table}",
+  "knitr::kable(",
+  "  params$focal_data %>%",
+  "    select(\"Date\" = date,",
+  "           \"Group\" = species_group,",
+  "           \"Species\" = scientific_name,",
+  "           \"Common name\" = common_name)",
+  ")",
+  "```",
+  "",
+  "Best wishes,  ",
+  "recorderFeedback")
+
+cat(paste0(lines, sep = "\n"))
+````
+
+## Rendering
+
+Render a single report for testing:
+
+```{r render_single}
+rf_render_single(recipient_id = "1152941")
+```
+
+Render for all recipients:
+
+```{r render_all}
+batch_id <- "vignette_demo"
+rf_render_all(batch_id = batch_id)
+rf_verify_batch(batch_id, verbose = TRUE)
+```
+
+# Distribution
+
+Finally, send the reports by email using the configured SMTP settings:
+
+```{r, eval = FALSE}
+rf_dispatch_smtp(batch_id = batch_id)
+```
+
+# Summary
+
+This vignette showed how to:
+
+1. Define recipients.
+2. Fetch their iNaturalist records via the API.
+3. Build a personalised R Markdown report.
+4. Render reports individually or in batch.
+5. Distribute them via email.
+
+The **recorderFeedback** package provides a structured workflow for automating ecological feedback loops such as iNaturalist activity summaries.

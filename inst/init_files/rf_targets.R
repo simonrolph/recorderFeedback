@@ -66,7 +66,8 @@ mapping <- tar_map(
                batch_id = batch_id,
                template_html = html_template_file
              ),
-             format="file"), # create the content as html
+             format="file",
+             error = "null"), # create the content as html
 
   tar_target(meta_data,list(recipient_id = recipient_id_,file = data_story_content,content_key = recipient_objects$content_key))
 )

@@ -28,7 +28,7 @@ Package functions are prefixed with `rf_`.
 Install from GitHub using `devtools`:
 
 ``` r
-devtools::install_github("yourusername/recorderFeedback")
+devtools::install_github("simonrolph/recorderFeedback")
 ```
 
 ## Quick Start
@@ -62,6 +62,16 @@ graph TD
     E --> |"rf_generate()"| G[Batch content and meta data<br>.html files]
     G --> |"rf_dispatch_smtp()"| J[Feedback received by recipients]
 ```
+
+Key terms:
+
+- Recipient: someone to receive feedback
+- Focal/background: whether the data relates to the recipient (focal),
+  or not (background)
+- Template: a RMarkdown document defining how the data is manipulated
+  and visualised
+- Computations: calculations or other processing done on the raw data
+  prior to rendering them template
 
 ``` r
 library(recorderFeedback)
@@ -143,16 +153,16 @@ rf_verify_data(T)
 rf_render_single(recipient_id = 1)
 ```
 
-    ## [1] "renders/singles/content_1_2025-08-18.html"
+    ## [1] "renders/singles/content_1_2025-08-20.html"
 
 ``` r
 # run the pipeline
 batch_id <- "test_batch"
-rf_generate(batch_id)
+rf_render_all(batch_id)
 ```
 
     ## + template_file dispatched
-    ## ✔ template_file completed [1.2s, 1.20 kB]
+    ## ✔ template_file completed [450ms, 1.20 kB]
     ## + html_template_file dispatched
     ## ✔ html_template_file completed [0ms, 2.28 kB]
     ## + recipients_target dispatched
@@ -168,25 +178,25 @@ rf_generate(batch_id)
     ## + bg_computed_objects dispatched
     ## ✔ bg_computed_objects completed [0ms, 78 B]
     ## + recipient_objects_1 dispatched
-    ## ✔ recipient_objects_1 completed [20ms, 392 B]
+    ## ✔ recipient_objects_1 completed [0ms, 392 B]
     ## + recipient_objects_2 dispatched
     ## ✔ recipient_objects_2 completed [0ms, 424 B]
     ## + recipient_objects_3 dispatched
-    ## ✔ recipient_objects_3 completed [0ms, 417 B]
+    ## ✔ recipient_objects_3 completed [20ms, 417 B]
     ## + recipient_objects_4 dispatched
     ## ✔ recipient_objects_4 completed [0ms, 413 B]
     ## + recipient_objects_5 dispatched
-    ## ✔ recipient_objects_5 completed [10ms, 415 B]
+    ## ✔ recipient_objects_5 completed [0ms, 415 B]
     ## + data_story_content_1 dispatched
-    ## ✔ data_story_content_1 completed [1.7s, 3.46 kB]
+    ## ✔ data_story_content_1 completed [1.8s, 3.46 kB]
     ## + data_story_content_2 dispatched
     ## ✔ data_story_content_2 completed [1.2s, 3.60 kB]
     ## + data_story_content_3 dispatched
-    ## ✔ data_story_content_3 completed [1.3s, 3.60 kB]
+    ## ✔ data_story_content_3 completed [1.2s, 3.60 kB]
     ## + data_story_content_4 dispatched
-    ## ✔ data_story_content_4 completed [1.4s, 3.60 kB]
+    ## ✔ data_story_content_4 completed [1.2s, 3.60 kB]
     ## + data_story_content_5 dispatched
-    ## ✔ data_story_content_5 completed [1.5s, 3.59 kB]
+    ## ✔ data_story_content_5 completed [1.2s, 3.59 kB]
     ## + meta_data_1 dispatched
     ## ✔ meta_data_1 completed [0ms, 172 B]
     ## + meta_data_2 dispatched
@@ -199,7 +209,7 @@ rf_generate(batch_id)
     ## ✔ meta_data_5 completed [0ms, 174 B]
     ## + meta_table dispatched
     ## ✔ meta_table completed [20ms, 653 B]
-    ## ✔ ended pipeline [11.1s, 24 completed, 0 skipped]
+    ## ✔ ended pipeline [9.2s, 24 completed, 0 skipped]
     ## Warning messages:
     ## 1: package 'targets' was built under R version 4.5.1 
     ## 2: package 'tarchetypes' was built under R version 4.5.1 
@@ -215,11 +225,11 @@ knitr::kable(head(meta_table))
 
 | recipient_id | file | content_key | email | name | batch_id |
 |---:|:---|:---|:---|:---|:---|
-| 1 | renders/test_batch/content_1_2025-08-18.html | test_batchax197s7f4rqb2o1k | <alice@example.com> | Alice | test_batch |
-| 2 | renders/test_batch/content_2_2025-08-18.html | test_batchj3rqrqww63pyq21h | <bob@example.com> | Bob | test_batch |
-| 3 | renders/test_batch/content_3_2025-08-18.html | test_batchq9zryyeo3ynmubf2 | <carol@example.com> | Carol | test_batch |
-| 4 | renders/test_batch/content_4_2025-08-18.html | test_batchw9u37ang7eij7jd9 | <dave@example.com> | Dave | test_batch |
-| 5 | renders/test_batch/content_5_2025-08-18.html | test_batch8x65335n14ojgtxe | <eve@example.com> | Eve | test_batch |
+| 1 | renders/test_batch/content_1_2025-08-20.html | test_batchax197s7f4rqb2o1k | <alice@example.com> | Alice | test_batch |
+| 2 | renders/test_batch/content_2_2025-08-20.html | test_batchj3rqrqww63pyq21h | <bob@example.com> | Bob | test_batch |
+| 3 | renders/test_batch/content_3_2025-08-20.html | test_batchq9zryyeo3ynmubf2 | <carol@example.com> | Carol | test_batch |
+| 4 | renders/test_batch/content_4_2025-08-20.html | test_batchw9u37ang7eij7jd9 | <dave@example.com> | Dave | test_batch |
+| 5 | renders/test_batch/content_5_2025-08-20.html | test_batch8x65335n14ojgtxe | <eve@example.com> | Eve | test_batch |
 
 ``` r
 #verify the batch
@@ -236,22 +246,12 @@ rf_verify_batch(batch_id)
 #rf_dispatch_smtp(batch_id)
 ```
 
-## Workflow Overview
+## Handling errors
 
-1.  **Initialise Project**: Use `rf_init()` to create a new project
-    structure.
-2.  **Configure**: Edit the configuration file to set paths and options.
-3.  **Load Data**: Import recipients and data using provided functions.
-4.  **Compute**: Optionally process data for summaries or statistics.
-5.  **Render Feedback**: Generate personalised feedback documents.
-6.  **Distribute**: Send feedback via email or other channels.
-
-## Key terms:
-
-- Recipient: someone to receive feedback
-- Focal/background: whether the data relates to the recipient (focal),
-  or not (background)
-- Template: a RMarkdown document defining how the data is manipulated
-  and visualised
-- Computations: calculations or other processing done on the raw data
-  prior to rendering them template
+If rendering a template fails the pipeline will continue, but you won’t
+have a `.html` file in the designated `renders/[batch_id]` folder. Using
+`rf_verify_batch()` will show you for which recipients the rendering
+failed. Using `targets::tar_meta(fields = "error")` will also tell you
+which targets failed and the corresponding error messages. Use
+`render_single(recipient_id)` to render an individual feedback item and
+view the detailed error message that is shown.

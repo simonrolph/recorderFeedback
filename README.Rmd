@@ -22,7 +22,7 @@ Package functions are prefixed with `rf_`.
 Install from GitHub using `devtools`:
 
 ```r
-devtools::install_github("yourusername/recorderFeedback")
+devtools::install_github("simonrolph/recorderFeedback")
 ```
 
 ## Quick Start
@@ -33,6 +33,7 @@ When you initialise a project with `rf_init()`, files are copied to set up your 
  * `scripts/computation.R`, `scripts/get_data.R`, `scripts/get_recipients.R`: Scripts for loading data, recipients, and running computations, matching the workflow steps outlined in the README.
  * `templates/content.Rmd`, `templates/email_format.R`, `templates/template.html`: Templates for rendering the feedback and formatting emails
  * `run_pipeline.R`, `_targets.R`: Pipeline orchestration scripts, supporting batch processing and automation
+ 
  
 This diagram attempts to explain how it fits together:
  
@@ -47,6 +48,13 @@ graph TD
     E --> |"rf_generate()"| G[Batch content and meta data<br>.html files]
     G --> |"rf_dispatch_smtp()"| J[Feedback received by recipients]
 ```
+
+Key terms:
+
+ - Recipient: someone to receive feedback
+ - Focal/background: whether the data relates to the recipient (focal), or not (background)
+ - Template: a RMarkdown document defining how the data is manipulated and visualised
+ - Computations: calculations or other processing done on the raw data prior to rendering them template
 
 ```{r quick_start}
 library(recorderFeedback)
@@ -71,7 +79,7 @@ rf_render_single(recipient_id = 1)
 
 # run the pipeline
 batch_id <- "test_batch"
-rf_generate(batch_id)
+rf_render_all(batch_id)
 
 #view the meta table
 meta_table <- read.csv(file.path("renders",batch_id,"/meta_table.csv"))
@@ -86,25 +94,13 @@ rf_verify_batch(batch_id)
 #rf_dispatch_smtp(batch_id)
 ```
 
-## Workflow Overview
+## Handling errors
 
-1. **Initialise Project**: Use `rf_init()` to create a new project structure.
-2. **Configure**: Edit the configuration file to set paths and options.
-3. **Load Data**: Import recipients and data using provided functions.
-4. **Compute**: Optionally process data for summaries or statistics.
-5. **Render Feedback**: Generate personalised feedback documents.
-6. **Distribute**: Send feedback via email or other channels.
-
-## Key terms:
-
- - Recipient: someone to receive feedback
- - Focal/background: whether the data relates to the recipient (focal), or not (background)
- - Template: a RMarkdown document defining how the data is manipulated and visualised
- - Computations: calculations or other processing done on the raw data prior to rendering them template
-
+If rendering a template fails the pipeline will continue, but you won't have a `.html` file in the designated `renders/[batch_id]` folder. Using `rf_verify_batch()` will show you for which recipients the rendering failed. Using `targets::tar_meta(fields = "error")` will also tell you which targets failed and the corresponding error messages. Use `render_single(recipient_id)` to render an individual feedback item and view the detailed error message that is shown.
 
 ```{r cleanup, echo = FALSE}
 setwd("C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback")
 unlink("example", recursive=TRUE)
 unlink("example")
 ```
+

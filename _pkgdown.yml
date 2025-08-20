@@ -2,3 +2,28 @@ url: https://simonrolph.github.io/recorderFeedback/
 template:
   bootstrap: 5
 
+reference:
+- title: Set up
+- contents:
+  - rf_init
+- title: Getting Data
+- contents:
+  - rf_get_recipients
+  - rf_get_data
+  - rf_verify_data
+- title: Generating Content
+- contents:
+  - rf_render_single
+  - rf_render_all
+  - rf_view_content
+  - rf_verify_batch
+- title: Distributing Content
+- contents:
+  - rf_dispatch_smtp
+- title: Helper functions
+  desc: Functions used internally within the package
+- contents:
+  - rf_make_meta_table
+  - rf_look_for_computed_objects
+  - rf_do_computations
+  - rf_render_content

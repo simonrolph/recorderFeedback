@@ -42,6 +42,12 @@ rf_verify_batch <- function(batch_id,verbose = FALSE) {
     stop("Meta table is missing required columns: ", paste(missing_meta_cols, collapse = ", "))
   }
 
+  # check for failed renders
+  failed_renders <- meta_table[is.na(meta_table$file),]
+  if (nrow(failed_renders)>0){
+    stop("These recipient_ids have failed renders: ", paste(failed_renders$recipient_id, collapse = ", "))
+  }
+
   # --- Check Recipient IDs Match Meta Table ---
   missing_in_meta <- setdiff(recipients$recipient_id, meta_table$recipient_id)
   if (length(missing_in_meta) > 0) {

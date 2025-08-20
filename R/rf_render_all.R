@@ -5,7 +5,7 @@
 #' @param batch_id Character. Identifier for the batch.
 #' @return Invisible
 #' @export
-rf_generate <- function(batch_id){
+rf_render_all <- function(batch_id){
 
   Sys.setenv(BATCH_ID = batch_id) # Set an environment variable in R for the batch code
   targets::tar_make() # run the pipeline
