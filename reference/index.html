@@ -21,6 +21,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/1_getting_data.html">Getting Data</a></li>
     <li><a class="dropdown-item" href="../articles/2_generating_content.html">Generating Content</a></li>
     <li><a class="dropdown-item" href="../articles/3_distributing_content.html">Distributing Content</a></li>
+    <li><a class="dropdown-item" href="../articles/example_1_inaturalist_summary.html">Example: iNaturalist Summary</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -36,7 +37,88 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="set-up">Set up<a class="anchor" aria-label="anchor" href="#set-up"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rf_init.html">rf_init()</a></code>
+
+        </dt>
+        <dd>Initialise a recorder feedback project</dd>
+      </dl></div><div class="section level2">
+      <h2 id="getting-data">Getting Data<a class="anchor" aria-label="anchor" href="#getting-data"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rf_get_recipients.html">rf_get_recipients()</a></code>
+
+        </dt>
+        <dd>Load recipient data</dd>
+      </dl><dl><dt>
+
+          <code><a href="rf_get_data.html">rf_get_data()</a></code>
+
+        </dt>
+        <dd>Load raw data</dd>
+      </dl><dl><dt>
+
+          <code><a href="rf_verify_data.html">rf_verify_data()</a></code>
+
+        </dt>
+        <dd>Verify data and recipient files</dd>
+      </dl></div><div class="section level2">
+      <h2 id="generating-content">Generating Content<a class="anchor" aria-label="anchor" href="#generating-content"></a></h2>
+
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rf_render_single.html">rf_render_single()</a></code>
+
+        </dt>
+        <dd>Render feedback for a single recipient</dd>
+      </dl><dl><dt>
+
+          <code><a href="rf_render_all.html">rf_render_all()</a></code>
+
+        </dt>
+        <dd>Render feedback content for all recipients</dd>
+      </dl><dl><dt>
+
+          <code><a href="rf_view_content.html">rf_view_content()</a></code>
+
+        </dt>
+        <dd>View rendered feedback for a recipient</dd>
+      </dl><dl><dt>
+
+          <code><a href="rf_verify_batch.html">rf_verify_batch()</a></code>
+
+        </dt>
+        <dd>Verify a render batch</dd>
+      </dl></div><div class="section level2">
+      <h2 id="distributing-content">Distributing Content<a class="anchor" aria-label="anchor" href="#distributing-content"></a></h2>
 
 
 
@@ -52,36 +134,23 @@
 
         </dt>
         <dd>Dispatch feedback via SMTP email</dd>
-      </dl><dl><dt>
+      </dl></div><div class="section level2">
+      <h2 id="helper-functions">Helper functions<a class="anchor" aria-label="anchor" href="#helper-functions"></a></h2>
 
-          <code><a href="rf_do_computations.html">rf_do_computations()</a></code>
+      <div class="section-desc"><p>Functions used internally within the package</p></div>
 
-        </dt>
-        <dd>Perform computations on data</dd>
-      </dl><dl><dt>
 
-          <code><a href="rf_generate.html">rf_generate()</a></code>
+    </div><div class="section level2">
 
-        </dt>
-        <dd>Render feedback content for all recipients</dd>
-      </dl><dl><dt>
 
-          <code><a href="rf_get_data.html">rf_get_data()</a></code>
 
-        </dt>
-        <dd>Load raw data</dd>
-      </dl><dl><dt>
 
-          <code><a href="rf_get_recipients.html">rf_get_recipients()</a></code>
+      <dl><dt>
+
+          <code><a href="rf_make_meta_table.html">rf_make_meta_table()</a></code>
 
         </dt>
-        <dd>Load recipient data</dd>
-      </dl><dl><dt>
-
-          <code><a href="rf_init.html">rf_init()</a></code>
-
-        </dt>
-        <dd>Initialise a recorder feedback project</dd>
+        <dd>Create meta table for feedback batch</dd>
       </dl><dl><dt>
 
           <code><a href="rf_look_for_computed_objects.html">rf_look_for_computed_objects()</a></code>
@@ -90,42 +159,19 @@
         <dd>Look in the R Markdown template and identify computed objects required in the code to render the template.</dd>
       </dl><dl><dt>
 
-          <code><a href="rf_make_meta_table.html">rf_make_meta_table()</a></code>
+          <code><a href="rf_do_computations.html">rf_do_computations()</a></code>
 
         </dt>
-        <dd>Create meta table for feedback batch</dd>
+        <dd>Perform computations on data</dd>
       </dl><dl><dt>
 
           <code><a href="rf_render_content.html">rf_render_content()</a></code>
 
         </dt>
         <dd>Render feedback content for all recipients</dd>
-      </dl><dl><dt>
-
-          <code><a href="rf_render_single.html">rf_render_single()</a></code>
-
-        </dt>
-        <dd>Render feedback for a single recipient</dd>
-      </dl><dl><dt>
-
-          <code><a href="rf_verify_batch.html">rf_verify_batch()</a></code>
-
-        </dt>
-        <dd>Verify a render batch</dd>
-      </dl><dl><dt>
-
-          <code><a href="rf_verify_data.html">rf_verify_data()</a></code>
-
-        </dt>
-        <dd>Verify data and recipient files</dd>
-      </dl><dl><dt>
-
-          <code><a href="rf_view_content.html">rf_view_content()</a></code>
-
-        </dt>
-        <dd>View rendered feedback for a recipient</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

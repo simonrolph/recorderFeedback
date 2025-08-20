@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/1_getting_data.html">Getting Data</a></li>
     <li><a class="dropdown-item" href="../articles/2_generating_content.html">Generating Content</a></li>
     <li><a class="dropdown-item" href="../articles/3_distributing_content.html">Distributing Content</a></li>
+    <li><a class="dropdown-item" href="../articles/example_1_inaturalist_summary.html">Example: iNaturalist Summary</a></li>
   </ul>
 </li>
       </ul>
@@ -117,14 +118,14 @@ plots, or prepare tables for inclusion in feedback.</p>
 <p>Content is generated using the template specified in
 <code>content_template_file</code> (an RMarkdown file). The function
 <code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> creates feedback for a specific
-recipient, while <code><a href="../reference/rf_generate.html">rf_generate()</a></code> processes a batch.</p>
+recipient, while <code>rf_generate()</code> processes a batch.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Render feedback for a single recipient</span></span>
 <span><span class="fu"><a href="../reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>For batch processing:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"example_batch"</span></span>
-<span><span class="fu"><a href="../reference/rf_generate.html">rf_generate</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="customising-templates">Customising Templates<a class="anchor" aria-label="anchor" href="#customising-templates"></a>
