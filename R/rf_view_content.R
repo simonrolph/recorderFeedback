@@ -47,7 +47,7 @@ rf_view_content <- function(batch_id, recipient_id=NULL) {
 
   if (answer == "Y") {
     for(i in 1:nrow(matches)){
-      render_file <- matches$file[1]
+      render_file <- matches$file[i]
 
       if (!file.exists(render_file)) {
         stop("Rendered file does not exist: ", render_file)

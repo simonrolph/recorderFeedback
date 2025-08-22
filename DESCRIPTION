@@ -16,6 +16,7 @@ LazyData: true
 Imports:
     dplyr,
     targets,
+    tarchetypes,
     rmarkdown,
     yaml,
     blastula,
