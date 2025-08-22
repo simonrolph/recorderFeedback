@@ -28,7 +28,7 @@ data_file <- read.csv(config$data_file) #raw species data
 #load the filtering script to load in focal_filter()
 tar_source(config$focal_filter_script)
 #load the email_format() used in rf_render_content() into environment
-tar_source(config$email_format.R)
+tar_source(config$email_format)
 
 #assertions to ensure the data is all there
 library(assertr)

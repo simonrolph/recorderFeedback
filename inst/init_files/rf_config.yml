@@ -9,6 +9,7 @@ default:
   computation_script_focal: "scripts/computation.R"
   content_template_file: "templates/content.Rmd"
   html_template_file: "templates/template.html"
+  email_format: "templates/email_format.R"
   pandoc_path: ""
   mail_server: ""
   mail_port: 587

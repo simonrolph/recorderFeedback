@@ -10,7 +10,7 @@ rf_get_recipients <- function(){
 
   # check that records have been updated
   if(difftime(file.info(config$recipients_file)$mtime,Sys.time(),units = "secs") < 5){
-    print("Recipient file has been updated")
+    message("Recipient file has been updated")
   } else {
     stop("Recipient file has not been updated, check for issue in gather script")
   }

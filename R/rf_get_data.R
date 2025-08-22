@@ -10,7 +10,7 @@ rf_get_data <- function(){
 
   # check that records have been updated
   if(difftime(file.info(config$data_file)$mtime,Sys.time(),units = "secs") < 5){
-    print("Data file has been updated")
+    message("Data file has been updated")
   } else {
     stop("Data file has not been updated, check for issue in gather script")
   }
