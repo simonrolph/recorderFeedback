@@ -4,7 +4,7 @@
 \alias{rf_view_content}
 \title{View rendered feedback for a recipient}
 \usage{
-rf_view_content(batch_id, recipient_id)
+rf_view_content(batch_id, recipient_id = NULL)
 }
 \arguments{
 \item{batch_id}{Character. The feedback batch identifier.}

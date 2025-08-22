@@ -9,6 +9,7 @@ rf_render_content(
   recipient_params,
   recipient_id,
   batch_id,
+  email_format,
   template_html
 )
 }

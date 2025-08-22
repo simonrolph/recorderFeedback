@@ -6,7 +6,7 @@
 #' @param recipient_id Character or numeric. The recipient's ID.
 #' @return Invisible TRUE if file is opened successfully, otherwise stops with an error.
 #' @export
-rf_view_content <- function(batch_id, recipient_id) {
+rf_view_content <- function(batch_id, recipient_id=NULL) {
   # Path to meta table
   meta_file <- file.path("renders", batch_id, "meta_table.csv")
 
@@ -27,25 +27,36 @@ rf_view_content <- function(batch_id, recipient_id) {
     stop("meta_table is missing required columns: ", paste(missing_cols, collapse = ", "))
   }
 
+
   # Filter for this recipient
-  matches <- meta_table[meta_table$recipient_id == recipient_id, ]
+  if(!is.null(recipient_id)){
+    matches <- meta_table[meta_table$recipient_id %in% recipient_id, ]
+  } else {
+    matches <- meta_table
+  }
+
 
   if (nrow(matches) == 0) {
     stop("No rendered content found for recipient_id: ", recipient_id, " in batch: ", batch_id)
   }
 
-  if (nrow(matches) > 1) {
-    warning("Multiple rendered files found for recipient_id: ", recipient_id, ". Opening the first one.")
+  answer <- "Y"
+  if(nrow(matches)>30){
+    answer <- readline(prompt = paste0("This will open ",nrow(matches),"  webpages, continue? (Y/n): "))
   }
 
-  render_file <- matches$file[1]
+  if (answer == "Y") {
+    for(i in 1:nrow(matches)){
+      render_file <- matches$file[1]
 
-  if (!file.exists(render_file)) {
-    stop("Rendered file does not exist: ", render_file)
+      if (!file.exists(render_file)) {
+        stop("Rendered file does not exist: ", render_file)
+      }
+
+      # Open in default browser or RStudio viewer
+      utils::browseURL(render_file)
+    }
   }
-
-  # Open in default browser or RStudio viewer
-  utils::browseURL(render_file)
 
   invisible(TRUE)
 }
