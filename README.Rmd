@@ -30,7 +30,7 @@ devtools::install_github("simonrolph/recorderFeedback")
 When you initialise a project with `rf_init()`, files are copied to set up your workflow, ensuring you have all the necessary templates, scripts, and configuration to get started quickly.
 
  * `config.yml`: The central configuration file referenced in the README, where you set paths and options for your project.
- * `scripts/computation.R`, `scripts/get_data.R`, `scripts/get_recipients.R`: Scripts for loading data, recipients, and running computations, matching the workflow steps outlined in the README.
+ * `scripts/computation.R`, `scripts/get_data.R`, `scripts/get_recipients.R`, `scripts/focal_filter.R`: Scripts for loading data, recipients, focal filtering and running computations, matching the workflow steps outlined in the README.
  * `templates/content.Rmd`, `templates/email_format.R`, `templates/template.html`: Templates for rendering the feedback and formatting emails
  * `run_pipeline.R`, `_targets.R`: Pipeline orchestration scripts, supporting batch processing and automation
  

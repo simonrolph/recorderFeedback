@@ -22,7 +22,7 @@ rf_verify_data(T)
 
 # run the pipeline
 batch_id <- paste0("batch-",Sys.Date())
-rf_generate(batch_id)
+rf_render_all(batch_id)
 
 #verify the batch
 rf_verify_batch(batch_id)

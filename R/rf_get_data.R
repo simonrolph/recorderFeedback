@@ -6,7 +6,7 @@
 #' @export
 rf_get_data <- function(){
   config <- config::get()
-  source(config$data_script)
+  source(config$data_script, local=attach(NULL))
 
   # check that records have been updated
   if(difftime(file.info(config$data_file)$mtime,Sys.time(),units = "secs") < 5){

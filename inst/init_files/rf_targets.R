@@ -17,14 +17,18 @@ if (batch_id == ""){
 
 tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr","lubridate"))
 
-#load the email format into environment
-source("templates/email_format.R")
+
 
 #read in data files
 #get configuration from config.yml
 config <- config::get()
 recipients <- read.csv(config$recipients_file) #recipients data
 data_file <- read.csv(config$data_file) #raw species data
+
+#load the filtering script to load in focal_filter()
+tar_source(config$focal_filter_script)
+#load the email_format() used in rf_render_content() into environment
+tar_source(config$email_format.R)
 
 #assertions to ensure the data is all there
 library(assertr)
@@ -43,8 +47,8 @@ mapping <- tar_map(
   tar_target(
     recipient_objects,
     list(
-      focal_data = filter(raw_data,recipient_id == recipient_id_), #generate a df for the user's recording activity
-      focal_computed_objects = rf_do_computations(computation = computation_file_focal, records_data=filter(raw_data,recipient_id == recipient_id_)), #do any computations on the user data
+      focal_data = focal_filter(raw_data,recipient_id = recipient_id_), #generate a df for the user's recording activity
+      focal_computed_objects = rf_do_computations(computation = computation_file_focal, records_data=focal_filter(raw_data,recipient_id = recipient_id_)), #do any computations on the user data
       content_key = paste0(batch_id,paste0(sample(c(1:9,letters),16,replace = T),collapse="")) # generate a content_key
     )
   ),
@@ -64,6 +68,7 @@ mapping <- tar_map(
                                   extra_params = recipients_target %>% filter(recipient_id == recipient_id_) %>% select(-name,-email)),
                recipient_id = recipient_id_,
                batch_id = batch_id,
+               email_format = email_format,
                template_html = html_template_file
              ),
              format="file",
@@ -92,8 +97,9 @@ list(
   #reading in the raw data to R object
   tar_target(raw_data, read.csv(raw_data_file)),
 
-  #reading in the raw data to R object
-  tar_target(recipients_target, read.csv(config$recipients_file)),
+  #reading in the recipients data to R object
+  tar_target(recipients_file, config$recipients_file,format = "file"),
+  tar_target(recipients_target, read.csv(recipients_file)),
 
   #carry out the computations on the whole dataset
   tar_target(bg_computed_objects,rf_do_computations(computation = computation_file, records_data=raw_data)),

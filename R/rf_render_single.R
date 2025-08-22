@@ -11,7 +11,8 @@ rf_render_single <- function(recipient_id,view = F){
   config <- config::get()
   batch_id <- "singles"
   dir.create("renders/singles",showWarnings = F)
-  source("templates/email_format.R")
+  source("templates/email_format.R") #email_format()
+  source("scripts/focal_filter.R")
 
   recipients <- read.csv(config$recipients_file)
   recipient <- recipients[recipients$recipient_id==recipient_id,]
@@ -19,10 +20,10 @@ rf_render_single <- function(recipient_id,view = F){
   bg_data <- read.csv(config$data_file)
   bg_computed_objects = rf_do_computations(computation = config$computation_script_bg,bg_data)
 
-  r_id<- recipient_id
-  focal_data = dplyr::filter(bg_data,recipient_id == r_id)
+  focal_data = focal_filter(bg_data,recipient_id)
   focal_computed_objects = rf_do_computations(computation = config$computation_script_focal,focal_data)
   content_key = paste0(batch_id,paste0(sample(c(1:9,letters),16,replace = T),collapse=""))
+
 
   params <- list(recipient_name = recipient$name,
        recipient_email = recipient$email,
@@ -39,6 +40,7 @@ rf_render_single <- function(recipient_id,view = F){
     params,
     recipient_id = recipient_id,
     batch_id = batch_id,
+    email_format = email_format,
     template_html = file.path(getwd(),config$html_template_file)
   )
 

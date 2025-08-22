@@ -69,6 +69,8 @@ rf_init <- function(path = ".") {
             file.path(path, "scripts" , "get_data.R"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_computation.R"),
             file.path(path, "scripts" , "computation.R"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_filter.R"),
+            file.path(path, "scripts" , "focal_filter.R"), overwrite = FALSE)
 
   if(path != "."){
     setwd(path)

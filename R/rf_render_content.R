@@ -9,7 +9,7 @@
 #' @param template_html Character. Template file for template
 #' @return Path to rendered file.
 #' @export
-rf_render_content <- function(template_file,recipient_params,recipient_id,batch_id,template_html){
+rf_render_content <- function(template_file,recipient_params,recipient_id,batch_id,email_format,template_html){
 
   # build a unique file name
   filename <- basename(template_file) # Use basename to get the filename with extension
