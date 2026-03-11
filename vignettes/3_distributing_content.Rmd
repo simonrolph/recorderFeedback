@@ -32,6 +32,16 @@ Confirm these prerequisites first:
 2. `renders/<batch_id>/meta_table.csv` exists.
 3. `rf_verify_batch(batch_id)` completes without blocking errors.
 
+You can run one preflight command before rendering and dispatching:
+
+```{r preflight_examples, eval=FALSE}
+# Fail fast before render
+rf_preflight(stage = "render")
+
+# Fail fast before dispatch
+rf_preflight(stage = "dispatch", batch_id = batch_id)
+```
+
 ## Configuration
 
 Distribution settings are managed in your project's `config.yml` file. Key entries include:
@@ -144,6 +154,8 @@ Inspect the generated dispatch files:
 - Authentication failure: review `mail_creds`, username/password, host, and port.
 - TLS/SSL mismatch: check `mail_use_tls` and `mail_use_ssl` for your SMTP provider.
 - Footer email mismatch error: generated file email does not match the meta table row.
+- QA failures from `rf_verify_data()`: duplicate `recipient_id`, missing/invalid emails,
+  or optional recorder schema checks (`date/species/site`).
 
 ## Summary
 

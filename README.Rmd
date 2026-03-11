@@ -75,6 +75,9 @@ knitr::kable(head(read.csv(config$data_file)))
 #verify the data is all good
 rf_verify_data(T)
 
+#preflight checks before render
+rf_preflight(stage = "render")
+
 #render a single feedback item
 rf_render_single(recipient_id = 1)
 
@@ -140,6 +143,14 @@ Recipients excluded by this function are written to `meta_table.csv` with `rende
 ## Handling errors
 
 If rendering a template fails the pipeline will continue, but you won't have a `.html` file in the designated `renders/[batch_id]` folder. Using `rf_verify_batch()` will show you for which recipients the rendering failed. Using `targets::tar_meta(fields = "error")` will also tell you which targets failed and the corresponding error messages. Use `render_single(recipient_id)` to render an individual feedback item and view the detailed error message that is shown.
+
+Data QA in `rf_verify_data()` now includes:
+
+- duplicate `recipient_id` detection
+- missing/invalid email checks
+- optional recorder schema checks for columns like `date`, `species`, and `site`
+
+Use `rf_preflight(stage = "dispatch", batch_id = "my_batch")` to fail fast before dispatch.
 
 ```{r cleanup, echo = FALSE}
 setwd("C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback")

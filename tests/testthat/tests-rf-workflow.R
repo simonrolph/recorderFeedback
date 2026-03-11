@@ -89,6 +89,64 @@ test_that("Data verification runs", {
   })
 })
 
+test_that("Data verification fails for duplicate recipient_id", {
+  tmp <- make_test_project(load_data = TRUE, label = "data-dup-recipient")
+
+  withr::with_dir(tmp, {
+    config <- config::get()
+    recipients <- read.csv(config$recipients_file, stringsAsFactors = FALSE)
+    recipients <- rbind(recipients, recipients[1, , drop = FALSE])
+    write.csv(recipients, config$recipients_file, row.names = FALSE)
+
+    expect_error(rf_verify_data(), "Duplicate recipient_id")
+  })
+})
+
+test_that("Data verification fails for invalid email", {
+  tmp <- make_test_project(load_data = TRUE, label = "data-invalid-email")
+
+  withr::with_dir(tmp, {
+    config <- config::get()
+    recipients <- read.csv(config$recipients_file, stringsAsFactors = FALSE)
+    recipients$email[1] <- "not-an-email"
+    write.csv(recipients, config$recipients_file, row.names = FALSE)
+
+    expect_error(rf_verify_data(), "Invalid email format")
+  })
+})
+
+test_that("Optional recorder schema checks warn or fail as configured", {
+  tmp <- make_test_project(load_data = TRUE, label = "data-schema-check")
+
+  withr::with_dir(tmp, {
+    expect_warning(
+      rf_verify_data(check_recorder_schema = TRUE, recorder_schema_required = FALSE),
+      "optional recorder schema columns"
+    )
+
+    expect_error(
+      rf_verify_data(check_recorder_schema = TRUE, recorder_schema_required = TRUE),
+      "optional recorder schema columns"
+    )
+  })
+})
+
+test_that("Preflight render and dispatch checks run", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "preflight")
+  batch_id <- "preflight_batch"
+
+  withr::with_dir(tmp, {
+    expect_message(rf_preflight(stage = "render", check_recorder_schema = FALSE), "Preflight complete")
+
+    rf_render_all(batch_id)
+    expect_message(
+      rf_preflight(stage = "dispatch", batch_id = batch_id, check_recorder_schema = FALSE),
+      "Preflight complete"
+    )
+  })
+})
+
 
 test_that("Batch pipeline runs", {
   skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")

@@ -25,6 +25,7 @@ Use this checklist to get your first batch rendered quickly. After your project 
 rf_get_recipients()
 rf_get_data()
 rf_verify_data(verbose = TRUE)
+rf_preflight(stage = "render")
 
 batch_id <- format(Sys.time(), "%Y%m%d_test")
 rf_render_all(batch_id = batch_id)
@@ -93,6 +94,7 @@ rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
 - `rf_get_recipients()`
 - `rf_get_data()`
 - `rf_verify_data()`
+- `rf_preflight(stage = "render")`
 - `rf_render_all()`
 - `rf_verify_batch()`
 - `rf_render_single(recipient_id = 1)`

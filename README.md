@@ -141,6 +141,9 @@ knitr::kable(head(read.csv(config$data_file)))
 ``` r
 #verify the data is all good
 rf_verify_data(T)
+
+#preflight checks before render
+rf_preflight(stage = "render")
 ```
 
     ## Number of data records: 20
@@ -291,3 +294,13 @@ failed. Using `targets::tar_meta(fields = "error")` will also tell you
 which targets failed and the corresponding error messages. Use
 `render_single(recipient_id)` to render an individual feedback item and
 view the detailed error message that is shown.
+
+Data QA in `rf_verify_data()` now includes:
+
+- duplicate `recipient_id` detection
+- missing/invalid email checks
+- optional recorder schema checks for columns like `date`, `species`, and
+  `site`
+
+Use `rf_preflight(stage = "dispatch", batch_id = "my_batch")` to fail
+fast before dispatch.
