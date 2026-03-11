@@ -49,6 +49,9 @@ rf_dispatch_smtp(batch_id = batch_id, dry_run = TRUE)
 
 # Send in test mode (config.yml test_mode: TRUE)
 rf_dispatch_smtp(batch_id = batch_id)
+
+# Preview a sample without sending
+rf_dispatch_smtp(batch_id = batch_id, preview_only = TRUE, preview_n = 5)
 ```
 
 9. Move to live dispatch only when ready.
@@ -82,6 +85,7 @@ rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
 6. Check results with `rf_verify_batch(batch_id = "my_batch")`.
 7. Run dispatch preflight with `rf_dispatch_smtp(batch_id = "my_batch", dry_run = TRUE)`.
 8. Dispatch with `rf_dispatch_smtp(batch_id = "my_batch")`.
+9. Optional sample preview with `rf_dispatch_smtp(batch_id = "my_batch", preview_only = TRUE, preview_n = 5)`.
 
 ## Useful Functions
 
@@ -93,5 +97,12 @@ rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
 - `rf_verify_batch()`
 - `rf_render_single(recipient_id = 1)`
 - `rf_dispatch_smtp(batch_id = "my_batch", dry_run = TRUE)`
+
+You can customise campaign delivery in `config.yml` with:
+
+- `mail_subject_template`
+- `mail_body_prefix_template` / `mail_body_suffix_template`
+- `mail_attachments_col` / `mail_inline_images_col`
+- `campaign_name` / `campaign_metadata`
 
 See package vignettes for complete examples.

@@ -229,3 +229,57 @@ test_that("Dispatch resume skips successful recipients", {
     expect_true(nrow(latest_target_rows) == (target_count_before + 1))
   })
 })
+
+test_that("Dispatch preview supports templated subject/body and media columns", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "dispatch-preview")
+  batch_id <- "dispatch_preview"
+
+  withr::with_dir(tmp, {
+    rf_render_all(batch_id)
+
+    cfg <- yaml::read_yaml("config.yml")
+    cfg$default$mail_subject_template <- "Campaign {{campaign_name}} for {{name}}"
+    cfg$default$mail_body_prefix_template <- "<p>Campaign {{campaign_name}} preview for {{name}}</p>"
+    cfg$default$campaign_name <- "Butterfly Pulse"
+    yaml::write_yaml(cfg, "config.yml")
+
+    attachment_path <- file.path("renders", batch_id, "attachment_note.txt")
+    inline_path <- file.path("renders", batch_id, "inline_note.png")
+    writeLines("attachment", attachment_path)
+    writeLines("inline image placeholder", inline_path)
+
+    meta_path <- file.path("renders", batch_id, "meta_table.csv")
+    meta <- read.csv(meta_path, stringsAsFactors = FALSE)
+    target_id <- meta$recipient_id[1]
+    meta$attachment_paths <- ""
+    meta$inline_image_paths <- ""
+    meta$attachment_paths[meta$recipient_id == target_id] <- attachment_path
+    meta$inline_image_paths[meta$recipient_id == target_id] <- inline_path
+
+    first_file <- meta$file[meta$recipient_id == target_id][1]
+    first_email <- meta$email[meta$recipient_id == target_id][1]
+    # Ensure the footer consistency check passes for the sampled preview row.
+    write(paste0("<!-- ", first_email, " -->"), file = first_file, append = TRUE)
+
+    write.csv(meta, meta_path, row.names = FALSE)
+
+    result <- rf_dispatch_smtp(
+      batch_id,
+      preview_only = TRUE,
+      preview_recipient_ids = target_id,
+      resume = FALSE
+    )
+
+    preview_index_path <- file.path("renders", batch_id, "dispatch_preview", "preview_index.csv")
+    expect_true(file.exists(preview_index_path))
+
+    preview_index <- read.csv(preview_index_path, stringsAsFactors = FALSE)
+    expect_true(any(preview_index$recipient_id == target_id))
+
+    log_tbl <- read.csv(result$log_file, stringsAsFactors = FALSE)
+    target_rows <- log_tbl[log_tbl$recipient_id == target_id & log_tbl$status == "Preview", , drop = FALSE]
+    expect_true(nrow(target_rows) >= 1)
+    expect_true(any(grepl("Campaign Butterfly Pulse for", target_rows$message, fixed = TRUE)))
+  })
+})

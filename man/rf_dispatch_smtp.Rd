@@ -11,7 +11,11 @@ rf_dispatch_smtp(
   confirm_live_send = FALSE,
   max_retries = NULL,
   retry_backoff_sec = NULL,
-  rate_per_minute = NULL
+  rate_per_minute = NULL,
+  preview_n = 0,
+  preview_recipient_ids = NULL,
+  preview_only = FALSE,
+  preview_dir = NULL
 )
 }
 \arguments{
@@ -33,6 +37,14 @@ Defaults to `config$mail_retry_backoff_sec`.}
 
 \item{rate_per_minute}{Numeric. Maximum send attempts per minute.
 Defaults to `config$mail_rate_per_minute`.}
+
+\item{preview_n}{Integer. If > 0, only process the first `preview_n` recipients.}
+
+\item{preview_recipient_ids}{Optional vector of recipient IDs to process.}
+
+\item{preview_only}{Logical. If TRUE, write preview HTML files and do not send.}
+
+\item{preview_dir}{Optional output directory for preview HTML files.}
 }
 \value{
 Invisible named list with `log_file`, `summary_file`, and `summary`.

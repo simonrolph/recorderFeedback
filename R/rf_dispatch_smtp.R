@@ -15,6 +15,10 @@
 #'   Defaults to `config$mail_retry_backoff_sec`.
 #' @param rate_per_minute Numeric. Maximum send attempts per minute.
 #'   Defaults to `config$mail_rate_per_minute`.
+#' @param preview_n Integer. If > 0, only process the first `preview_n` recipients.
+#' @param preview_recipient_ids Optional vector of recipient IDs to process.
+#' @param preview_only Logical. If TRUE, write preview HTML files and do not send.
+#' @param preview_dir Optional output directory for preview HTML files.
 #' @return Invisible named list with `log_file`, `summary_file`, and `summary`.
 #' @export
 rf_dispatch_smtp <- function(
@@ -24,7 +28,11 @@ rf_dispatch_smtp <- function(
     confirm_live_send = FALSE,
     max_retries = NULL,
     retry_backoff_sec = NULL,
-    rate_per_minute = NULL) {
+  rate_per_minute = NULL,
+  preview_n = 0,
+  preview_recipient_ids = NULL,
+  preview_only = FALSE,
+  preview_dir = NULL) {
 
   rf_dispatch_error_type <- function(message) {
     msg <- tolower(as.character(message))
@@ -148,6 +156,109 @@ rf_dispatch_smtp <- function(
     }
   }
 
+  rf_dispatch_render_template <- function(template, context) {
+    if (is.null(template) || !nzchar(template)) {
+      return("")
+    }
+
+    out <- template
+    matches <- gregexpr("\\{\\{\\s*([A-Za-z0-9_.-]+)\\s*\\}\\}", out, perl = TRUE)
+    tokens <- regmatches(out, matches)[[1]]
+
+    if (length(tokens) == 0 || identical(tokens, "")) {
+      return(out)
+    }
+
+    for (token in unique(tokens)) {
+      key <- gsub("^\\{\\{\\s*|\\s*\\}\\}$", "", token)
+      value <- context[[key]]
+      if (is.null(value) || length(value) == 0 || is.na(value[1])) {
+        value <- ""
+      }
+      out <- gsub(token, as.character(value[1]), out, fixed = TRUE)
+    }
+
+    out
+  }
+
+  rf_dispatch_parse_paths <- function(value) {
+    if (is.null(value) || length(value) == 0 || is.na(value[1]) || !nzchar(as.character(value[1]))) {
+      return(character(0))
+    }
+
+    parts <- unlist(strsplit(as.character(value[1]), "[;,|]"))
+    parts <- trimws(parts)
+    parts <- parts[nzchar(parts)]
+    parts
+  }
+
+  rf_dispatch_build_context <- function(row, config, batch_id) {
+    context <- as.list(row)
+    context <- lapply(context, function(x) {
+      if (length(x) == 0 || is.na(x[1])) "" else as.character(x[1])
+    })
+
+    context$batch_id <- batch_id
+    context$campaign_batch_id <- batch_id
+    context$campaign_name <- if (!is.null(config$campaign_name) && nzchar(config$campaign_name)) {
+      as.character(config$campaign_name)
+    } else {
+      batch_id
+    }
+    context$campaign_date <- as.character(Sys.Date())
+    context$dispatch_timestamp <- format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")
+    context$mail_subject <- if (!is.null(config$mail_subject)) as.character(config$mail_subject) else ""
+
+    if (!is.null(config$campaign_metadata) && is.list(config$campaign_metadata)) {
+      meta_names <- names(config$campaign_metadata)
+      if (!is.null(meta_names) && any(nzchar(meta_names))) {
+        for (nm in meta_names[nzchar(meta_names)]) {
+          context[[paste0("campaign_", nm)]] <- as.character(config$campaign_metadata[[nm]])
+        }
+      }
+    }
+
+    context
+  }
+
+  rf_dispatch_apply_body_templates <- function(html, prefix_html, suffix_html, inline_images) {
+    inline_block <- ""
+    if (length(inline_images) > 0) {
+      image_tags <- vapply(
+        inline_images,
+        function(img) {
+          src <- gsub("\\\\", "/", img)
+          paste0('<p><img src="', src, '" style="max-width:100%;height:auto;" /></p>')
+        },
+        character(1)
+      )
+      inline_block <- paste0(image_tags, collapse = "")
+    }
+
+    prefix_html <- if (is.null(prefix_html)) "" else prefix_html
+    suffix_html <- paste0(if (is.null(suffix_html)) "" else suffix_html, inline_block)
+
+    out <- html
+
+    if (nzchar(prefix_html)) {
+      if (grepl("<body[^>]*>", out, ignore.case = TRUE, perl = TRUE)) {
+        out <- sub("<body[^>]*>", paste0("\\0", prefix_html), out, ignore.case = TRUE, perl = TRUE)
+      } else {
+        out <- paste0(prefix_html, out)
+      }
+    }
+
+    if (nzchar(suffix_html)) {
+      if (grepl("</body>", out, ignore.case = TRUE, perl = TRUE)) {
+        out <- sub("</body>", paste0(suffix_html, "</body>"), out, ignore.case = TRUE, perl = TRUE)
+      } else {
+        out <- paste0(out, suffix_html)
+      }
+    }
+
+    out
+  }
+
   config <- config::get()
 
   if (is.null(max_retries)) {
@@ -158,6 +269,21 @@ rf_dispatch_smtp <- function(
   }
   if (is.null(rate_per_minute)) {
     rate_per_minute <- if (!is.null(config$mail_rate_per_minute)) config$mail_rate_per_minute else 60
+  }
+
+  preview_n <- as.integer(preview_n)
+  if (is.na(preview_n) || preview_n < 0) {
+    stop("preview_n must be a non-negative integer")
+  }
+
+  preview_ids <- NULL
+  if (!is.null(preview_recipient_ids)) {
+    preview_ids <- as.character(preview_recipient_ids)
+  }
+
+  preview_enabled <- isTRUE(preview_only) || preview_n > 0 || !is.null(preview_ids)
+  if (isTRUE(preview_only)) {
+    dry_run <- TRUE
   }
 
   max_retries <- as.integer(max_retries)
@@ -200,9 +326,24 @@ rf_dispatch_smtp <- function(
     skipped_before_dispatch <- 0
   }
 
+  if (!is.null(preview_ids)) {
+    dispatch_rows <- dispatch_rows[as.character(dispatch_rows$recipient_id) %in% preview_ids, , drop = FALSE]
+  }
+
+  if (preview_n > 0) {
+    dispatch_rows <- utils::head(dispatch_rows, preview_n)
+  }
+
   log_file <- file.path("renders", batch_id, "dispatch_log.csv")
   summary_file <- file.path("renders", batch_id, "dispatch_summary.csv")
   dir.create(dirname(log_file), recursive = TRUE, showWarnings = FALSE)
+
+  if (is.null(preview_dir) || !nzchar(preview_dir)) {
+    preview_dir <- file.path("renders", batch_id, "dispatch_preview")
+  }
+  if (preview_enabled) {
+    dir.create(preview_dir, recursive = TRUE, showWarnings = FALSE)
+  }
 
   prior_log <- data.frame()
   if (file.exists(log_file)) {
@@ -257,6 +398,44 @@ rf_dispatch_smtp <- function(
   min_interval <- 60 / rate_per_minute
   last_attempt_time <- as.numeric(Sys.time()) - min_interval
 
+  subject_template <- if (!is.null(config$mail_subject_template) && nzchar(config$mail_subject_template)) {
+    as.character(config$mail_subject_template)
+  } else {
+    "{{mail_subject}}"
+  }
+
+  body_prefix_template <- if (!is.null(config$mail_body_prefix_template)) {
+    as.character(config$mail_body_prefix_template)
+  } else {
+    ""
+  }
+
+  body_suffix_template <- if (!is.null(config$mail_body_suffix_template)) {
+    as.character(config$mail_body_suffix_template)
+  } else {
+    ""
+  }
+
+  attachments_col <- if (!is.null(config$mail_attachments_col) && nzchar(config$mail_attachments_col)) {
+    as.character(config$mail_attachments_col)
+  } else {
+    "attachment_paths"
+  }
+
+  inline_images_col <- if (!is.null(config$mail_inline_images_col) && nzchar(config$mail_inline_images_col)) {
+    as.character(config$mail_inline_images_col)
+  } else {
+    "inline_image_paths"
+  }
+
+  preview_index <- data.frame(
+    recipient_id = character(),
+    email = character(),
+    subject = character(),
+    preview_file = character(),
+    stringsAsFactors = FALSE
+  )
+
   for (i in seq_len(nrow(valid_rows))) {
     row <- valid_rows[i, , drop = FALSE]
 
@@ -268,6 +447,34 @@ rf_dispatch_smtp <- function(
 
     recipient_id <- as.character(row$recipient_id)
     recipient_email <- as.character(row$email)
+
+    context <- rf_dispatch_build_context(row, config, batch_id)
+    subject <- rf_dispatch_render_template(subject_template, context)
+    if (!nzchar(subject)) {
+      subject <- as.character(config$mail_subject)
+    }
+
+    body_prefix <- rf_dispatch_render_template(body_prefix_template, context)
+    body_suffix <- rf_dispatch_render_template(body_suffix_template, context)
+
+    attachment_paths <- character(0)
+    if (attachments_col %in% names(row)) {
+      attachment_paths <- rf_dispatch_parse_paths(row[[attachments_col]])
+    }
+    if (length(attachment_paths) > 0) {
+      attachment_paths <- vapply(attachment_paths, function(x) normalizePath(x, winslash = "/", mustWork = FALSE), character(1))
+    }
+
+    inline_image_paths <- character(0)
+    if (inline_images_col %in% names(row)) {
+      inline_image_paths <- rf_dispatch_parse_paths(row[[inline_images_col]])
+    }
+    if (length(inline_image_paths) > 0) {
+      inline_image_paths <- vapply(inline_image_paths, function(x) normalizePath(x, winslash = "/", mustWork = FALSE), character(1))
+    }
+
+    missing_attachments <- attachment_paths[!file.exists(attachment_paths)]
+    missing_inline_images <- inline_image_paths[!file.exists(inline_image_paths)]
 
     footer_check <- tryCatch({
       lines_read <- paste0(readLines(row$file, warn = FALSE), collapse = "")
@@ -283,12 +490,56 @@ rf_dispatch_smtp <- function(
         error_type = "content",
         message = "Target email address is different to email listed in footer"
       )
-    } else if (dry_run) {
+    } else if (length(missing_attachments) > 0) {
       send_result <- list(
-        status = "DryRun",
+        status = "Failed",
+        attempt = 0L,
+        error_type = "content",
+        message = paste0("Missing attachment file(s): ", paste(missing_attachments, collapse = ", "))
+      )
+    } else if (length(missing_inline_images) > 0) {
+      send_result <- list(
+        status = "Failed",
+        attempt = 0L,
+        error_type = "content",
+        message = paste0("Missing inline image file(s): ", paste(missing_inline_images, collapse = ", "))
+      )
+    } else if (dry_run) {
+      base_html <- paste0(readLines(row$file, warn = FALSE), collapse = "")
+      final_html <- rf_dispatch_apply_body_templates(
+        html = base_html,
+        prefix_html = body_prefix,
+        suffix_html = body_suffix,
+        inline_images = inline_image_paths
+      )
+
+      if (preview_enabled) {
+        preview_file <- file.path(preview_dir, paste0("preview_", recipient_id, ".html"))
+        writeLines(final_html, preview_file, useBytes = TRUE)
+        preview_index <- rbind(
+          preview_index,
+          data.frame(
+            recipient_id = recipient_id,
+            email = recipient_email,
+            subject = subject,
+            preview_file = preview_file,
+            stringsAsFactors = FALSE
+          )
+        )
+      }
+
+      send_result <- list(
+        status = if (isTRUE(preview_only)) "Preview" else "DryRun",
         attempt = 0L,
         error_type = NA_character_,
-        message = "Preflight passed; email not sent (dry_run = TRUE)"
+        message = paste0(
+          if (isTRUE(preview_only)) {
+            "Preview generated; email not sent"
+          } else {
+            "Preflight passed; email not sent (dry_run = TRUE)"
+          },
+          "; subject=", subject
+        )
       )
     } else {
       destination_email <- if (isTRUE(config$test_mode)) {
@@ -297,14 +548,41 @@ rf_dispatch_smtp <- function(
         recipient_email
       }
 
+      base_html <- paste0(readLines(row$file, warn = FALSE), collapse = "")
+      final_html <- rf_dispatch_apply_body_templates(
+        html = base_html,
+        prefix_html = body_prefix,
+        suffix_html = body_suffix,
+        inline_images = inline_image_paths
+      )
+
+      temp_file <- tempfile(pattern = "rf_dispatch_", fileext = ".html")
+      writeLines(final_html, temp_file, useBytes = TRUE)
+
+      if (preview_enabled) {
+        preview_file <- file.path(preview_dir, paste0("preview_", recipient_id, ".html"))
+        writeLines(final_html, preview_file, useBytes = TRUE)
+        preview_index <- rbind(
+          preview_index,
+          data.frame(
+            recipient_id = recipient_id,
+            email = destination_email,
+            subject = subject,
+            preview_file = preview_file,
+            stringsAsFactors = FALSE
+          )
+        )
+      }
+
       send_call <- function() {
-        email_obj <- blastula:::cid_images(row$file)
+        email_obj <- blastula:::cid_images(temp_file)
         blastula::smtp_send(
           email = email_obj,
           from = sender,
           to = destination_email,
-          subject = config$mail_subject,
+          subject = subject,
           credentials = creds,
+          attachments = if (length(attachment_paths) > 0) attachment_paths else NULL,
           verbose = FALSE
         )
       }
@@ -316,6 +594,7 @@ rf_dispatch_smtp <- function(
       )
 
       recipient_email <- destination_email
+      unlink(temp_file, force = TRUE)
     }
 
     run_log <- rbind(
@@ -337,10 +616,15 @@ rf_dispatch_smtp <- function(
 
   rf_dispatch_append_log(log_file, run_log)
 
+  if (preview_enabled && nrow(preview_index) > 0) {
+    write.csv(preview_index, file.path(preview_dir, "preview_index.csv"), row.names = FALSE)
+  }
+
   total_attempted <- nrow(run_log)
   total_success <- sum(run_log$status == "Success")
   total_failed <- sum(run_log$status == "Failed")
   total_dry_run <- sum(run_log$status == "DryRun")
+  total_preview <- sum(run_log$status == "Preview")
 
   summary <- data.frame(
     timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
@@ -353,6 +637,7 @@ rf_dispatch_smtp <- function(
     success_this_run = total_success,
     failed_this_run = total_failed,
     dry_run_this_run = total_dry_run,
+    preview_this_run = total_preview,
     stringsAsFactors = FALSE
   )
 

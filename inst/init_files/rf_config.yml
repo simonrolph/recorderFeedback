@@ -21,8 +21,15 @@ default:
   mail_sender: 'test@test.com'
   mail_name: 'Recorder Feedback'
   mail_subject: "Your feedback"
+  mail_subject_template: "{{mail_subject}}"
+  mail_body_prefix_template: ""
+  mail_body_suffix_template: ""
   mail_creds: "anonymous"
   mail_test_recipient: 'test@test.com'
   mail_retry_max: 3
   mail_retry_backoff_sec: 2
   mail_rate_per_minute: 60
+  mail_attachments_col: "attachment_paths"
+  mail_inline_images_col: "inline_image_paths"
+  campaign_name: ""
+  campaign_metadata: {}

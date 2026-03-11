@@ -247,6 +247,9 @@ rf_verify_batch(batch_id)
 #rf_dispatch_smtp(batch_id, dry_run = TRUE)  # preflight only
 #rf_dispatch_smtp(batch_id)                  # send in test_mode
 #rf_dispatch_smtp(batch_id, confirm_live_send = TRUE) # required when test_mode = FALSE
+
+#preview a sample without sending
+#rf_dispatch_smtp(batch_id, preview_only = TRUE, preview_n = 5)
 ```
 
 ## Dispatch Safety
@@ -266,6 +269,18 @@ Recommended send sequence:
 
 If a run is interrupted, rerun with `resume = TRUE` to skip recipients already
 marked as `Success` in `dispatch_log.csv`.
+
+Campaign controls:
+
+- `mail_subject_template` supports recipient/campaign variables, e.g.
+  `"{{campaign_name}} update for {{name}}"`.
+- `mail_body_prefix_template` / `mail_body_suffix_template` inject optional
+  HTML around each rendered email using the same template variables.
+- `mail_attachments_col` / `mail_inline_images_col` define optional
+  `meta_table.csv` columns with per-recipient file paths for attachments and
+  inline media.
+- `preview_only` with `preview_n` or `preview_recipient_ids` writes sampled
+  previews to `renders/<batch_id>/dispatch_preview/`.
 
 ## Handling errors
 
