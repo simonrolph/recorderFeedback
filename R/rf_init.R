@@ -3,6 +3,8 @@
 #' Sets up the directory structure and template files for a new feedback project.
 #' Also creates a `README.md` with a quick-start guide when one does not exist.
 #' Also creates a root `.gitignore` when one does not exist.
+#' Includes a scaffolded `SPEC.md`, `.Renviron`, `data/README.md`, and
+#' `scripts/packages.R` package manifest.
 #'
 #' @param path Character. Path to create the project.
 #' @return Invisible
@@ -69,10 +71,18 @@ rf_init <- function(path = ".") {
 
   file.copy(file.path(template_dir, "rf_README.md"),
             file.path(path, "README.md"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_SPEC.md"),
+            file.path(path, "SPEC.md"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_Renviron"),
+            file.path(path, ".Renviron"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_gitignore"),
             file.path(path, ".gitignore"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_AGENTS.md"),
             file.path(path, ".github", "AGENTS.md"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_data_README.md"),
+            file.path(path, "data", "README.md"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_packages.R"),
+            file.path(path, "scripts", "packages.R"), overwrite = FALSE)
 
   if(path != "."){
     setwd(path)

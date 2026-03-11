@@ -16,4 +16,6 @@ Invisible
 Sets up the directory structure and template files for a new feedback project.
 Also creates a `README.md` with a quick-start guide when one does not exist.
 Also creates a root `.gitignore` when one does not exist.
+Includes a scaffolded `SPEC.md`, `.Renviron`, `data/README.md`, and
+`scripts/packages.R` package manifest.
 }

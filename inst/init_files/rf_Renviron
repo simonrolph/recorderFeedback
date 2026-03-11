@@ -1,0 +1,5 @@
+# Set this before rendering from a terminal if pandoc is not on PATH.
+# Point to the directory that contains pandoc.exe.
+# Example:
+# RSTUDIO_PANDOC=C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools
+RSTUDIO_PANDOC=

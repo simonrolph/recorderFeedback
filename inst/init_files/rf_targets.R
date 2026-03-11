@@ -2,6 +2,9 @@ library(targets)
 library(tarchetypes)
 library(recorderFeedback)
 
+# Add any R packages used in scripts/computation.R or templates/content.Rmd here.
+# Keep this list in sync with scripts/packages.R.
+project_packages <- c("ggplot2", "rmarkdown", "tidyr", "lubridate")
 
 #batch identifier
 batch_id <- Sys.getenv("BATCH_ID")
@@ -15,7 +18,7 @@ if (batch_id == ""){
 #   controller = crew_controller_local(workers = 4),
 # )
 
-tar_option_set(packages = c("ggplot2","rmarkdown","tidyr","lubridate"))
+tar_option_set(packages = project_packages)
 
 
 

@@ -8,17 +8,24 @@ Use this checklist to get your first batch rendered quickly. After your project 
 
 1. Review and edit `config.yml`.
 	Confirm all script paths, template paths, and output locations are correct for your project.
-2. Prepare your scripts in `scripts/`.
+2. Fill in `SPEC.md`.
+  Add your use-case, output requirements, and acceptance criteria before asking an agent to modify scripts/templates.
+3. Populate `data/README.md`.
+  Document each data column (`name`, `type`, `description`, `example`) so computations and template logic are unambiguous.
+4. Prepare your scripts in `scripts/`.
 	- `get_recipients.R` should create a table of recipients with a unique ID.
 	- `get_data.R` should load the source data used in feedback generation.
 	- `computation.R` should define objects used by your template.
 	- `focal_filter.R` should subset data for each recipient/item.
 	- `recipient_select.R` can optionally decide which recipients are rendered in a batch.
-3. Prepare your templates in `templates/`.
+  - `packages.R` should list all package `library()` calls used across scripts and templates.
+5. Prepare your templates in `templates/`.
 	- `content.Rmd` should contain the main feedback content.
 	- `template.html` should provide the HTML wrapper/styling.
 	- `email_format.R` should define the email body/subject formatting.
-4. Run a first dry workflow in R.
+6. Check `.Renviron` if rendering from a terminal.
+  Set `RSTUDIO_PANDOC` to the folder containing `pandoc.exe` if pandoc is not on your PATH.
+7. Run a first dry workflow in R.
 
 ```r
 # Run from project root
@@ -32,17 +39,17 @@ rf_render_all(batch_id = batch_id)
 rf_verify_batch(batch_id = batch_id)
 ```
 
-5. Inspect output files.
+8. Inspect output files.
 	Check `renders/<batch_id>/` and open a few outputs to confirm layout and computed values look correct.
-6. Iterate on scripts/templates and rerun.
+9. Iterate on scripts/templates and rerun.
 	It is normal to tweak `content.Rmd`, `template.html`, and computation logic a few times before production use.
-7. Render or preview one record when debugging.
+10. Render or preview one record when debugging.
 
 ```r
 rf_render_single(recipient_id = 1)
 ```
 
-8. Preflight and test dispatch.
+11. Preflight and test dispatch.
 
 ```r
 # Validate dispatch rows/files without sending
@@ -55,14 +62,14 @@ rf_dispatch_smtp(batch_id = batch_id)
 rf_dispatch_smtp(batch_id = batch_id, preview_only = TRUE, preview_n = 5)
 ```
 
-9. Move to live dispatch only when ready.
+12. Move to live dispatch only when ready.
 
 ```r
 # Required safeguard when config.yml test_mode: FALSE
 rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
 ```
 
-10. Remove this section.
+13. Remove this section.
 	Once your workflow is stable, delete this whole "Getting Started" block and replace it with project-specific notes.
 
 ## AI Agent Quickstart
@@ -73,13 +80,17 @@ file gives the agent the context it needs.
 
 ### What to prepare
 
-1. **Drop your real data into `data/`.**
+1. **Fill in `SPEC.md` and `data/README.md` first.**
+  - `SPEC.md` tells the agent exactly what to build.
+  - `data/README.md` tells the agent what each column means.
+
+2. **Drop your real data into `data/`.**
    The agent will read from those files when writing `get_recipients.R` and
    `get_data.R`, so the more representative the files, the better the output.
    - `data/recipients.csv` — at minimum: `recipient_id`, `name`, `email`.
    - `data/data.csv` — source records keyed by `recipient_id`.
 
-2. **Write a short plain-English specification.** Example:
+3. **Write a short plain-English specification.** Example:
 
    ---
    **Use-case:** Personalised end-of-season feedback emails for butterfly transect recorders.
@@ -132,6 +143,9 @@ rf_render_all() for the full batch, and rf_verify_batch(). Fix any errors that
 arise.
 ```
 
+If there are package errors, update `scripts/packages.R` and mirror the package
+names in `_targets.R` `project_packages`.
+
 ### What the agent will do
 
 - Write `scripts/get_recipients.R` and `scripts/get_data.R` to load your files.
@@ -160,7 +174,11 @@ arise.
 - `templates/`: HTML, R Markdown, and email template files.
 - `scripts/`: Data loading, recipient generation, filtering, and computations.
 - `scripts/recipient_select.R`: Optional batch selection hook for selective rendering.
+- `scripts/packages.R`: Human/agent-readable package manifest.
 - `data/`: Inputs and intermediate files (gitignored by default).
+- `data/README.md`: Data dictionary used by humans and agents.
+- `SPEC.md`: Project requirements and acceptance criteria.
+- `.Renviron`: Environment variables, including optional `RSTUDIO_PANDOC`.
 - `renders/`: Batch render outputs.
 
 ## Typical Workflow

@@ -36,8 +36,12 @@ logic for a specific recording scheme.
 Scaffolded areas include:
 
 - `config.yml`: central project settings and paths.
+- `SPEC.md`: campaign specification and acceptance criteria.
 - `scripts/`: data ingest, focal filtering, selection, and computation logic.
+- `scripts/packages.R`: package manifest for scripts/templates.
 - `templates/`: content template, HTML wrapper, and email format function.
+- `data/README.md`: data dictionary with schema descriptions.
+- `.Renviron`: environment variables (including optional `RSTUDIO_PANDOC`).
 - `renders/`: output batches (`meta_table.csv`, rendered HTML, logs).
 - `run_pipeline.R` + `_targets.R`: orchestration for batch rendering.
 
@@ -47,6 +51,10 @@ Treat `rf_init()` as project bootstrapping, not a finished workflow.
 
 After initialization, adapt these components for your domain:
 
+- `SPEC.md`
+	Write concrete requirements before asking an agent to generate code.
+- `data/README.md`
+	Document data columns with type/description/example.
 - `scripts/get_recipients.R`
 	Build recipient table with at least `recipient_id`, `name`, and `email`.
 - `scripts/get_data.R`
@@ -106,6 +114,8 @@ Recommended data columns for a butterfly recording use-case (beyond the minimum
 - `templates/template.html`
 - `templates/email_format.R`
 
+Treat `SPEC.md` and `data/README.md` as mandatory inputs for first-pass agent work quality.
+
 ## Data Contracts
 
 Minimum expected columns:
@@ -149,10 +159,12 @@ Key points:
 ## _targets.R Package List
 
 `rf_render_all()` orchestrates rendering via `targets`. The `tar_option_set()`
-call in `_targets.R` must list every package used inside `content.Rmd`:
+call in `_targets.R` is sourced from a single vector named `project_packages`.
+Add package names there and keep `scripts/packages.R` in sync.
 
 ```r
-tar_option_set(packages = c("ggplot2", "rmarkdown", "tidyr", "lubridate"))
+project_packages <- c("ggplot2", "rmarkdown", "tidyr", "lubridate")
+tar_option_set(packages = project_packages)
 ```
 
 If a package is used in the template but absent from this list, the render

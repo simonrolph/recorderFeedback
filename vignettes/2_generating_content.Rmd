@@ -115,6 +115,45 @@ recipient_select <- function(recipients, data, config) {
 
 Skipped recipients remain in `renders/<batch_id>/meta_table.csv` with `render_status = "skipped"`, but no HTML file is produced for them.
 
+## Using Location-Based Feedback Instead of Individual-Based Feedback
+
+You can use `recorderFeedback` for place-based reporting (for example, "all species recorded in location X") rather than person-based reporting.
+
+The main idea is:
+
+1. Keep one row per email recipient in `recipients_file`.
+2. Add location fields to recipients (for example `location_id`, `location_name`).
+3. Ensure your records data includes a matching location field.
+4. Change `scripts/focal_filter.R` so focal data is filtered by location, not by recorder identity.
+
+Required recipient columns are still `recipient_id`, `name`, and `email`, but you can add any extra columns needed for filtering and template content.
+
+Example `focal_filter()` for location-based emails:
+
+```{r focal_filter_location_example}
+focal_filter <- function(all_data, recipient_id) {
+  config <- config::get()
+  recipients <- read.csv(config$recipients_file, stringsAsFactors = FALSE)
+
+  rec <- recipients[recipients$recipient_id == recipient_id, , drop = FALSE]
+  if (nrow(rec) == 0) {
+    stop("No recipient row for recipient_id = ", recipient_id)
+  }
+
+  # Each recipient row maps to a location of interest.
+  loc <- rec$location_id[1]
+
+  # Focal data now means all records in that location.
+  focal_data <- subset(all_data, location_id == loc)
+
+  focal_data
+}
+```
+
+Once this is in place, `rf_render_single()` and `rf_render_all()` work as normal, but each email can now summarise all records from the recipient's location.
+
+If your source data has coordinates instead of a `location_id`, you can apply a spatial filter in `focal_filter()` using polygons or bounding boxes from the recipient row.
+
 ## Customising Templates
 
 - `templates/content.Rmd`: Defines content structure and where computed objects are shown.
