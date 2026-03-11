@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval=FALSE
+  eval = FALSE
 )
 ```
 
@@ -21,7 +21,16 @@ library(recorderFeedback)
 
 # Distributing Content
 
-This vignette describes how **recorderFeedback** distributes generated feedback to recipients.
+This vignette explains how to safely send generated feedback by email.
+It is designed for new users who have already rendered a batch successfully.
+
+## Before Sending Any Email
+
+Confirm these prerequisites first:
+
+1. You have run `rf_render_all(batch_id)`.
+2. `renders/<batch_id>/meta_table.csv` exists.
+3. `rf_verify_batch(batch_id)` completes without blocking errors.
 
 ## Configuration
 
@@ -34,6 +43,22 @@ Distribution settings are managed in your project's `config.yml` file. Key entri
 - `mail_sender`, `mail_name`: Sender details.
 - `mail_subject`: Subject line for feedback emails.
 - `mail_test_recipient`: Address for test emails.
+- `mail_creds`: Authentication mode (`"anonymous"` or `"envvar"`).
+- `test_mode`: If `TRUE`, all messages are redirected to `mail_test_recipient`.
+
+```{r show_mail_config}
+config <- config::get()
+config[c(
+  "test_mode",
+  "mail_creds",
+  "mail_server",
+  "mail_port",
+  "mail_sender",
+  "mail_name",
+  "mail_subject",
+  "mail_test_recipient"
+)]
+```
 
 ## Dispatching Feedback
 
@@ -44,12 +69,13 @@ batch_id <- "example_batch"
 rf_dispatch_smtp(batch_id)
 ```
 
-You can test your email setup by sending to the address specified in `mail_test_recipient` before distributing to all recipients.
+For a safe first run, keep `test_mode: TRUE` in `config.yml`.
+This sends all outputs to `mail_test_recipient` instead of real recipient addresses.
 
 ## Customising Email Content
 
-- **Email formatting** is controlled by the template specified in `content_template_file` and `html_template_file` in `rf_config.yml`.
-- **Email body and attachments** are generated for each recipient using these templates.
+- Email body content comes from `content_template_file` and `html_template_file`.
+- Sending format is controlled by `email_format` (usually `templates/email_format.R`).
 
 ## Verifying Distribution
 
@@ -59,10 +85,18 @@ After dispatch, you can verify which emails were sent and check for any errors:
 rf_verify_batch(batch_id)
 ```
 
+You should also inspect the status report email sent to `mail_test_recipient`.
+
+## Common First-Run Issues
+
+- Authentication failure: review `mail_creds`, username/password, host, and port.
+- TLS/SSL mismatch: check `mail_use_tls` and `mail_use_ssl` for your SMTP provider.
+- Footer email mismatch error: generated file email does not match the meta table row.
+
 ## Summary
 
-- Email distribution is fully configurable via `rf_config.yml`.
+- Email distribution is fully configurable via `config.yml`.
 - Use `rf_dispatch_smtp()` to send feedback to recipients.
-- Test and verify your setup before full distribution.
+- Keep `test_mode: TRUE` for dry runs, then switch to `FALSE` for live sending.
 
-This approach ensures your feedback reaches recipients efficiently and
+This approach helps you validate delivery safely before contacting real recipients.

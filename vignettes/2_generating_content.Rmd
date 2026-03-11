@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval=FALSE
+  eval = FALSE
 )
 ```
 
@@ -21,40 +21,63 @@ library(recorderFeedback)
 
 # Generating Content
 
-This vignette describes how **recorderFeedback** generates personalised feedback content, including how computations are integrated into the workflow.
+This vignette explains how to turn your loaded data into personalised feedback pages.
+It is aimed at new users who have already completed the "Getting Data" steps.
+
+## Workflow At A Glance
+
+The content stage has three parts:
+
+1. Optional computations on focal and background data.
+2. Rendering one recipient for testing.
+3. Rendering all recipients as a batch.
 
 ## Configuration
 
-Content generation is controlled by your project's configuration file, `config.yml`. Key entries include:
+Content generation is controlled by `config.yml`. Key entries are:
 
 - `computation_script_focal`: Script for computations on focal (recipient-specific) data.
 - `computation_script_bg`: Script for background computations.
 - `content_template_file`: RMarkdown template for rendering feedback.
 - `html_template_file`: HTML template for styling output.
 
-By default, both computation scripts point to `"scripts/computation.R"`, but you can specify different scripts if needed.
+By default, both computation script fields point to `"scripts/computation.R"`.
+
+```{r show_content_config}
+config <- config::get()
+config[c(
+  "computation_script_focal",
+  "computation_script_bg",
+  "content_template_file",
+  "html_template_file"
+)]
+```
 
 ## Computations
 
-During the content generation pipeline, you can run custom computations on your data. These scripts (referenced in `computation_script_focal` and `computation_script_bg`) allow you to summarise, analyse, or transform your data as required.
+Computation scripts let you prepare summaries and metrics before rendering.
+This is useful for totals, rankings, trends, and other values you want to reuse in templates.
+
+In normal use, computations are executed automatically as part of rendering.
+If you are building custom scripts, this is the core helper used internally:
 
 ```{r run_computations}
-# Run computations for focal and background data
-rf_do_computations()
+records <- read.csv(config$data_file)
+computed <- rf_do_computations(config$computation_script_bg, records)
 ```
 
-You can customise the computation scripts to suit your analysis needs. For example, you might calculate summary statistics, generate plots, or prepare tables for inclusion in feedback.
+Your computation script should define `compute_objects(records_data)` and return an object (often a list) that can be used in templates.
 
 ## Rendering Content
 
-Content is generated using the template specified in `content_template_file` (an RMarkdown file). The function `rf_render_single()` creates feedback for a specific recipient, while `rf_generate()` processes a batch.
+Start by rendering a single recipient to check template logic before running a full batch.
 
 ```{r render_single}
-# Render feedback for a single recipient
+# Use a known recipient_id from recipients_file
 rf_render_single(recipient_id = 1)
 ```
 
-For batch processing:
+Then run the whole batch:
 
 ```{r generate_batch}
 batch_id <- "example_batch"
@@ -63,8 +86,10 @@ rf_render_all(batch_id)
 
 ## Customising Templates
 
-- **RMarkdown template** (`templates/content.Rmd`): Defines the structure and appearance of the feedback document. You can edit this to include custom text, tables, plots, and computed results.
-- **HTML template** (`templates/template.html`): Controls the look and feel of the final output.
+- `templates/content.Rmd`: Defines content structure and where computed objects are shown.
+- `templates/template.html`: Controls final page styling and layout wrapper.
+
+Keep template edits small and test with `rf_render_single()` after each change.
 
 ## Viewing and Verifying Output
 
@@ -77,3 +102,13 @@ rf_view_content(batch_id = batch_id, recipient_id = 1)
 ```{r verify_batch}
 rf_verify_batch(batch_id)
 ```
+
+## Common First-Run Issues
+
+- `meta_table.csv` missing: batch rendering did not complete.
+- Template errors during render: test with `rf_render_single()` to isolate the failing recipient.
+- Missing recipient output: check that `recipient_id` values match between recipients and data files.
+
+## Next Step
+
+After content renders cleanly, continue to the "Distributing Content" vignette to send output by email.

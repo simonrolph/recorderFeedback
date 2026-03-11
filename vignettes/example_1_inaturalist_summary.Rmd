@@ -21,18 +21,29 @@ library(recorderFeedback)
 
 # Overview
 
-This vignette demonstrates how to use **recorderFeedback** to fetch iNaturalist data for recipients, summarize it into personalized reports, and distribute the results via email. It walks through the full pipeline: setup, data collection, template creation, rendering, and distribution.
+This end-to-end example shows how to use **recorderFeedback** with iNaturalist data.
+It is written for new users, so each stage is explicit: initialise project, load recipients, fetch observations, render content, then distribute.
+
+## What You Will Build
+
+By the end you will have:
+
+1. A recipients table linked to iNaturalist user IDs.
+2. A records table fetched from the iNaturalist API.
+3. A simple personalised report template.
+4. One test render and one batch render.
+5. Optional SMTP dispatch.
 
 # Setup
 
-Initialize a project directory and load configuration:
+Initialise a project directory and read config:
 
 ```{r setup3}
 rf_init("inaturalist_example")
 config <- config::get()
 ```
 
-This creates the working structure and loads the configuration settings defined in `config.yml`.
+Run subsequent commands from that project directory so relative paths in `config.yml` are valid.
 
 # Getting data
 
@@ -44,7 +55,6 @@ For this example, we manually define them in a script.
 **File: `scripts/get_recipients.R`**
 
 ```{r get_recipients}
-# A script for getting recipients
 config <- config::get()
 df <- data.frame(
   email = c("simon@example.com"),
@@ -60,7 +70,7 @@ Run the recipient script:
 rf_get_recipients()
 ```
 
-Inspect the recipients file:
+Inspect recipients:
 
 ```{r view_recipients}
 read.csv(config$recipients_file)
@@ -69,6 +79,12 @@ read.csv(config$recipients_file)
 ## Collecting iNaturalist records
 
 We now pull iNaturalist observations for each recipient over the last 30 days.
+
+Install required packages if needed:
+
+```{r deps, eval=FALSE}
+install.packages(c("httr", "jsonlite"))
+```
 
 **File: `scripts/get_data.R`**
 
@@ -118,7 +134,7 @@ get_inat_observations <- function(user_id) {
 
 recipients <- read.csv(config$recipients_file)
 observations <- data.frame()
-for (i in 1:nrow(recipients)) {
+for (i in seq_len(nrow(recipients))) {
   observations <- rbind(observations,
                         get_inat_observations(recipients$recipient_id[i]))
 }
@@ -126,7 +142,7 @@ for (i in 1:nrow(recipients)) {
 write.csv(observations, config$data_file, row.names = FALSE)
 ```
 
-Fetch and verify the data:
+Run and verify:
 
 ```{r get_data, eval = FALSE}
 rf_get_data()
@@ -148,7 +164,7 @@ The template includes:
 * Count of unique species recorded
 * A table of recent observations
 
-(This is rendered with a `print()` function because putting R markdown into R markdown is apparently hard without it getting confused.)
+(To keep this vignette self-contained, the template text is printed directly.)
 
 ````{r, eval = TRUE, echo = FALSE}
 lines <- c(
@@ -207,11 +223,18 @@ rf_verify_batch(batch_id, verbose = TRUE)
 
 # Distribution
 
-Finally, send the reports by email using the configured SMTP settings:
+Finally, send reports by email using configured SMTP settings.
+For first tests, keep `test_mode: TRUE` in `config.yml`.
 
 ```{r, eval = FALSE}
 rf_dispatch_smtp(batch_id = batch_id)
 ```
+
+# Troubleshooting
+
+- No records returned: verify the iNaturalist `recipient_id` values are valid user IDs.
+- API errors: rerun later or reduce request size while testing.
+- Render failure: test with `rf_render_single()` and inspect the template chunk that fails.
 
 # Summary
 
