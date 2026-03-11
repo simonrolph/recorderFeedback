@@ -38,6 +38,7 @@ Content generation is controlled by `config.yml`. Key entries are:
 
 - `computation_script_focal`: Script for computations on focal (recipient-specific) data.
 - `computation_script_bg`: Script for background computations.
+- `recipient_select_script`: Optional script for selecting which recipients to render in a batch.
 - `content_template_file`: RMarkdown template for rendering feedback.
 - `html_template_file`: HTML template for styling output.
 
@@ -48,6 +49,7 @@ config <- config::get()
 config[c(
   "computation_script_focal",
   "computation_script_bg",
+  "recipient_select_script",
   "content_template_file",
   "html_template_file"
 )]
@@ -83,6 +85,35 @@ Then run the whole batch:
 batch_id <- "example_batch"
 rf_render_all(batch_id)
 ```
+
+## Rendering Only Selected Recipients
+
+Batch rendering can be filtered with the script referenced by `recipient_select_script`.
+That script should define `recipient_select(recipients, data, config)` and return one of:
+
+- `NULL` to render everyone.
+- A logical vector with one value per row in `recipients`.
+- A vector of `recipient_id` values to render.
+- A data frame containing `recipient_id`, `selected`, and optional `skip_reason`.
+
+For example, to render only recipients that have at least five records and record why others were skipped:
+
+```{r recipient_select_example}
+recipient_select <- function(recipients, data, config) {
+  counts <- aggregate(list(n = data$recipient_id), by = list(recipient_id = data$recipient_id), FUN = length)
+  counts <- merge(recipients["recipient_id"], counts, by = "recipient_id", all.x = TRUE)
+  counts$n[is.na(counts$n)] <- 0
+
+  data.frame(
+    recipient_id = counts$recipient_id,
+    selected = counts$n >= 5,
+    skip_reason = ifelse(counts$n >= 5, NA_character_, "Fewer than 5 records"),
+    stringsAsFactors = FALSE
+  )
+}
+```
+
+Skipped recipients remain in `renders/<batch_id>/meta_table.csv` with `render_status = "skipped"`, but no HTML file is produced for them.
 
 ## Customising Templates
 

@@ -4,7 +4,7 @@
 \alias{rf_make_meta_table}
 \title{Create meta table for feedback batch}
 \usage{
-rf_make_meta_table(x, batch_id, recipient_data)
+rf_make_meta_table(x, batch_id, recipient_data, selection_data = NULL)
 }
 \arguments{
 \item{x}{A list or data frame of feedback results to summarize.}
@@ -12,6 +12,8 @@ rf_make_meta_table(x, batch_id, recipient_data)
 \item{batch_id}{Character. Identifier for the feedback batch.}
 
 \item{recipient_data}{Data frame. Recipient information to join.}
+
+\item{selection_data}{Data frame. Recipient selection information.}
 }
 \value{
 Character. Path to the written meta table CSV file.

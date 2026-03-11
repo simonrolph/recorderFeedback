@@ -42,8 +42,16 @@ rf_verify_batch <- function(batch_id,verbose = FALSE) {
     stop("Meta table is missing required columns: ", paste(missing_meta_cols, collapse = ", "))
   }
 
-  # check for failed renders
-  failed_renders <- meta_table[is.na(meta_table$file),]
+  if ("render_status" %in% colnames(meta_table)) {
+    rendered_rows <- meta_table[meta_table$render_status == "rendered", , drop = FALSE]
+    failed_renders <- meta_table[meta_table$render_status == "failed", , drop = FALSE]
+    skipped_renders <- meta_table[meta_table$render_status == "skipped", , drop = FALSE]
+  } else {
+    rendered_rows <- meta_table[!is.na(meta_table$file), , drop = FALSE]
+    failed_renders <- meta_table[is.na(meta_table$file), , drop = FALSE]
+    skipped_renders <- meta_table[FALSE, , drop = FALSE]
+  }
+
   if (nrow(failed_renders)>0){
     stop("These recipient_ids have failed renders: ", paste(failed_renders$recipient_id, collapse = ", "))
   }
@@ -60,7 +68,7 @@ rf_verify_batch <- function(batch_id,verbose = FALSE) {
   }
 
   # --- Check Rendered Files Exist ---
-  missing_files <- meta_table$file[!file.exists(meta_table$file)]
+  missing_files <- rendered_rows$file[!file.exists(rendered_rows$file)]
   if (length(missing_files) > 0) {
     warning("The following rendered files are missing: ", paste(missing_files, collapse = ", "))
   }
@@ -69,6 +77,7 @@ rf_verify_batch <- function(batch_id,verbose = FALSE) {
   if (verbose) {
     message("Number of recipients: ", nrow(recipients))
     message("Number of entries in meta_table: ", nrow(meta_table))
+    message("Number of skipped recipients: ", nrow(skipped_renders))
     message("Number of missing render files: ", length(missing_files))
   }
 

@@ -58,6 +58,7 @@ test_that("Configuration files exist", {
     expect_true(file.exists(file.path(getwd(),config$data_script)))
 
     expect_true(file.exists(file.path(getwd(),config$focal_filter_script)))
+    expect_true(file.exists(file.path(getwd(),config$recipient_select_script)))
     expect_true(file.exists(file.path(getwd(),config$computation_script_bg)))
     expect_true(file.exists(file.path(getwd(),config$computation_script_focal)))
     expect_true(file.exists(file.path(getwd(),config$content_template_file)))
@@ -110,6 +111,43 @@ test_that("Batch verification runs", {
   withr::with_dir(tmp, {
     rf_render_all(batch_id)
     expect_message(rf_verify_batch(batch_id))
+  })
+})
+
+test_that("Batch rendering can skip recipients via recipient_select", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "batch-select")
+  batch_id <- "selected_batch"
+
+  withr::with_dir(tmp, {
+    config <- config::get()
+    recipients <- read.csv(config$recipients_file, stringsAsFactors = FALSE)
+    selected_id <- recipients$recipient_id[1]
+
+    writeLines(
+      c(
+        "recipient_select <- function(recipients, data, config) {",
+        "  data.frame(",
+        "    recipient_id = recipients$recipient_id,",
+        "    selected = recipients$recipient_id == recipients$recipient_id[1],",
+        "    skip_reason = ifelse(recipients$recipient_id == recipients$recipient_id[1], NA_character_, 'Filtered in test'),",
+        "    stringsAsFactors = FALSE",
+        "  )",
+        "}"
+      ),
+      config$recipient_select_script
+    )
+
+    rf_render_all(batch_id)
+
+    meta_table <- read.csv(file.path("renders", batch_id, "meta_table.csv"), stringsAsFactors = FALSE)
+
+    expect_equal(sum(meta_table$render_status == "rendered"), 1)
+    expect_equal(sum(meta_table$render_status == "skipped"), nrow(recipients) - 1)
+    expect_true(all(meta_table$recipient_id %in% recipients$recipient_id))
+    expect_true(all(meta_table$file[meta_table$render_status == "skipped"] %in% c(NA, "")))
+    expect_true(all(meta_table$skip_reason[meta_table$render_status == "skipped"] == "Filtered in test"))
+    expect_true(any(meta_table$recipient_id == selected_id & meta_table$render_status == "rendered"))
   })
 })
 

@@ -6,7 +6,16 @@
 #' @return Message indicating status.
 #' @export
 rf_dispatch_smtp <- function(batch_id){
-  meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"))
+  config <- config::get()
+  meta_table <-read.csv(paste0("renders/",batch_id,"/meta_table.csv"), stringsAsFactors = FALSE)
+
+  if ("render_status" %in% colnames(meta_table)) {
+    dispatch_rows <- meta_table[meta_table$render_status == "rendered", , drop = FALSE]
+    skipped_count <- sum(meta_table$render_status == "skipped")
+  } else {
+    dispatch_rows <- meta_table[!is.na(meta_table$file), , drop = FALSE]
+    skipped_count <- 0
+  }
 
   #configure smtp authentication
   if(config$mail_creds == "envvar"){
@@ -35,7 +44,7 @@ rf_dispatch_smtp <- function(batch_id){
   )
 
   #here we are going through all the recipients and sending email
-  for (i in 1:nrow(meta_table)) {
+  for (i in seq_len(nrow(dispatch_rows))) {
 
     result <- tryCatch({
       # Debug: Print current row being processed
@@ -47,10 +56,9 @@ rf_dispatch_smtp <- function(batch_id){
       }
 
       # Extract values
-      content_key <- meta_table[i, "content_key"]
-      recipient_id <- meta_table[i, "recipient_id"]
-      file <- meta_table[i, "file"]
-      email <- meta_table[i, "email"]
+      recipient_id <- dispatch_rows[i, "recipient_id"]
+      file <- dispatch_rows[i, "file"]
+      email <- dispatch_rows[i, "email"]
 
 
       #check email is in content
@@ -99,21 +107,14 @@ rf_dispatch_smtp <- function(batch_id){
   }
 
   #send an email to test email with a status log
-  status_lines <- apply(status_log, 1, function(row) {
-    paste(
-      "recipient ID:", row["recipient_id"],
-      "| Email:", row["email"],
-      "| Status:", row["status"],
-      "| Message:", row["message"]
-    )
-  })
-
-  report_email <- compose_email(
-    body = md(
+  report_email <- blastula::compose_email(
+    body = blastula::md(
       paste0(
         "### Email Send Summary",
         "
       Total attempted: ", nrow(status_log),
+        "
+      Skipped before dispatch: ", skipped_count,
         "
       ✅ Success: ", sum(status_log$status == "Success"),
         "
@@ -125,7 +126,7 @@ rf_dispatch_smtp <- function(batch_id){
     footer = Sys.time()
   )
 
-  smtp_send(
+  blastula::smtp_send(
     email = report_email,
     from = sender,
     to = config$mail_test_recipient,  # your email

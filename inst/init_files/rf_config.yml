@@ -5,6 +5,7 @@ default:
   data_file: "data/data.csv"
   data_script: "scripts/get_data.R"
   focal_filter_script: "scripts/focal_filter.R"
+  recipient_select_script: "scripts/recipient_select.R"
   computation_script_bg: "scripts/computation.R"
   computation_script_focal: "scripts/computation.R"
   content_template_file: "templates/content.Rmd"

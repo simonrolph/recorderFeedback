@@ -7,7 +7,8 @@
 rf_render_all(batch_id)
 }
 \arguments{
-\item{batch_id}{Character. Identifier for the batch.}
+\item{batch_id}{Character. Identifier for the batch.
+Recipient selection can be customised in config.yml via recipient_select_script.}
 }
 \value{
 Invisible

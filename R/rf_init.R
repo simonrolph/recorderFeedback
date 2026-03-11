@@ -63,6 +63,8 @@ rf_init <- function(path = ".") {
             file.path(path, "scripts" , "computation.R"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_filter.R"),
             file.path(path, "scripts" , "focal_filter.R"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_recipient_select.R"),
+            file.path(path, "scripts" , "recipient_select.R"), overwrite = FALSE)
 
   file.copy(file.path(template_dir, "rf_README.md"),
             file.path(path, "README.md"), overwrite = FALSE)

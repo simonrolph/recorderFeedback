@@ -13,6 +13,7 @@ Use this checklist to get your first batch rendered quickly. After your project 
 	- `get_data.R` should load the source data used in feedback generation.
 	- `computation.R` should define objects used by your template.
 	- `focal_filter.R` should subset data for each recipient/item.
+	- `recipient_select.R` can optionally decide which recipients are rendered in a batch.
 3. Prepare your templates in `templates/`.
 	- `content.Rmd` should contain the main feedback content.
 	- `template.html` should provide the HTML wrapper/styling.
@@ -50,6 +51,7 @@ rf_render_single(recipient_id = 1)
 - `run_pipeline.R`: Convenience script to run the pipeline.
 - `templates/`: HTML, R Markdown, and email template files.
 - `scripts/`: Data loading, recipient generation, filtering, and computations.
+- `scripts/recipient_select.R`: Optional batch selection hook for selective rendering.
 - `data/`: Inputs and intermediate files (gitignored by default).
 - `renders/`: Batch render outputs.
 
