@@ -66,6 +66,21 @@ For butterfly recorder feedback this could include
 date-window summaries, species richness, top species, site coverage, and
 year-on-year comparisons.
 
+Recommended data columns for a butterfly recording use-case (beyond the minimum
+`recipient_id`):
+
+| Column | Type | Notes |
+|---|---|---|
+| `date` | `"YYYY-MM-DD"` | Observation date |
+| `year` | integer | Extracted from date for grouping |
+| `month` | integer | 1–12, for seasonal profiles |
+| `species` | character | Scientific name |
+| `common_name` | character | Vernacular name |
+| `count` | integer | Individuals observed |
+| `site` | character | Named recording location |
+| `latitude` | numeric | WGS84 |
+| `longitude` | numeric | WGS84 |
+
 ## Key Functions
 
 - `rf_get_recipients()`
@@ -107,6 +122,50 @@ Optional recorder analytics schema checks can be enabled for columns such as:
 Use `rf_verify_data(check_recorder_schema = TRUE)` or `rf_preflight()` to
 enforce these checks before rendering.
 
+## computation.R Contract
+
+The computation script **must** define a function named exactly `compute_objects`
+whose first argument is `data`. It must return a named list.
+
+```r
+compute_objects <- function(data) {
+  list(
+    n_records = nrow(data),
+    ...
+  )
+}
+```
+
+Key points:
+
+- `config$computation_script_bg` and `config$computation_script_focal` can both
+  point to the same file if background and focal computations are identical.
+- The returned list is passed to `content.Rmd` as `params$focal_computed_objects`
+  and `params$bg_computed_objects` respectively.
+- Always guard against empty data (`nrow(data) == 0`) and return a consistent
+  structure so the template doesn't error for recipients with no records.
+- Any R objects are valid return values: data frames, ggplot objects, vectors, etc.
+
+## _targets.R Package List
+
+`rf_render_all()` orchestrates rendering via `targets`. The `tar_option_set()`
+call in `_targets.R` must list every package used inside `content.Rmd`:
+
+```r
+tar_option_set(packages = c("ggplot2", "rmarkdown", "tidyr", "lubridate"))
+```
+
+If a package is used in the template but absent from this list, the render
+target will fail with a "could not find function" error.
+
+`rf_render_all()` uses `targets` caching — re-running only rebuilds changed
+targets. To force a complete re-render from scratch:
+
+```r
+targets::tar_destroy()
+rf_render_all(batch_id)
+```
+
 ## Selective Rendering
 
 Selective rendering is controlled by `config$recipient_select_script`.
@@ -123,6 +182,34 @@ Accepted return values:
 
 Recipients that are not selected are written to `renders/<batch_id>/meta_table.csv`
 with `render_status = "skipped"`.
+
+## Environment Setup (Windows)
+
+When running from a terminal (not RStudio), `rmarkdown::render()` cannot find
+pandoc because RStudio's bundled pandoc is not on the system PATH.
+
+The `pandoc_path` key in `config.yml` does **not** solve this. Instead, set the
+`RSTUDIO_PANDOC` environment variable to the directory containing the pandoc
+executable.
+
+Create a `.Renviron` file in the project root:
+
+```
+RSTUDIO_PANDOC=C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools
+```
+
+Verify the path exists before writing it:
+
+```r
+file.exists("C:/Program Files/RStudio/resources/app/bin/quarto/bin/tools/pandoc.exe")
+```
+
+Alternatively, set it inline when calling `Rscript`:
+
+```powershell
+$env:RSTUDIO_PANDOC = "C:\Program Files\RStudio\resources\app\bin\quarto\bin\tools"
+Rscript -e "library(recorderFeedback); rf_render_single(recipient_id = 1)"
+```
 
 ## Standard Runbook
 
