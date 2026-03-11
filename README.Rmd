@@ -4,23 +4,42 @@ output: github_document
 
 # recorderFeedback
 
-**recorderFeedback** is an R package for generating personalised, data-driven feedback, originally designed for citizen science wildlife recording but adaptable to other domains. The package provides tools to set up a feedback workflow, load data, generate content, and distribute feedback to recipients.
+`recorderFeedback` helps you run an end-to-end feedback workflow in R:
 
-## Features
+- collect recipients and data
+- compute recipient-level summaries
+- render personalised HTML feedback
+- dispatch feedback by email (with safety checks and logs)
 
-- **Project Initialisation**: Quickly scaffold a new feedback project with all necessary files and folders.
-- **Data Loading**: Import recipient and observation data from configurable sources.
-- **Computation**: Run custom analyses or summaries on your data before generating feedback.
-- **Content Rendering**: Create personalised feedback documents for each recipient using RMarkdown templates.
-- **Batch Processing**: Automate feedback generation for multiple recipients.
-- **Email Dispatch**: Send feedback via email using SMTP with dry-run preflight,
-  retry/backoff, rate limiting, and resumable batches.
+It was designed for wildlife recording and citizen science, but the workflow is general and can be adapted to other domains.
 
-Package functions are prefixed with `rf_`.
+All exported functions are prefixed with `rf_`.
+
+## What the package does
+
+The package provides opinionated building blocks for a repeatable campaign workflow:
+
+- `rf_init()` scaffolds a project structure and starter files.
+- `rf_get_recipients()` and `rf_get_data()` populate your `data/` inputs.
+- `rf_verify_data()` and `rf_preflight()` catch problems early.
+- `rf_render_single()` and `rf_render_all()` generate recipient content.
+- `rf_verify_batch()` and `rf_view_content()` help QA outputs.
+- `rf_dispatch_smtp()` sends emails with dry-run, resume, retries, and rate limiting.
+
+## Workflow at a glance
+
+After `rf_init()`, your project includes:
+
+- `config.yml`: central settings (file paths, templates, email options, test mode)
+- `scripts/`: data retrieval and computation scripts you customize
+- `templates/content.Rmd`: per-recipient feedback template
+- `templates/template.html`: optional HTML wrapper
+- `_targets.R` and `run_pipeline.R`: batch orchestration
+- `renders/`: output folder for rendered files and dispatch logs
 
 ## Installation
 
-Install from GitHub using `devtools`:
+Install from GitHub:
 
 ```r
 devtools::install_github("simonrolph/recorderFeedback")
@@ -28,82 +47,88 @@ devtools::install_github("simonrolph/recorderFeedback")
 
 ## Quick Start
 
-When you initialise a project with `rf_init()`, files are copied to set up your workflow, ensuring you have all the necessary templates, scripts, and configuration to get started quickly.
+### 1. Create a new feedback project
 
- * `config.yml`: The central configuration file referenced in the README, where you set paths and options for your project.
- * `scripts/computation.R`, `scripts/get_data.R`, `scripts/get_recipients.R`, `scripts/focal_filter.R`, `scripts/recipient_select.R`: Scripts for loading data, recipients, focal filtering, optional batch selection, and running computations, matching the workflow steps outlined in the README.
- * `templates/content.Rmd`, `templates/email_format.R`, `templates/template.html`: Templates for rendering the feedback and formatting emails
- * `run_pipeline.R`, `_targets.R`: Pipeline orchestration scripts, supporting batch processing and automation
- 
- 
-This diagram attempts to explain how it fits together:
- 
-```mermaid
-graph TD
-    A[Data source] --> |"rf_get_recipients()<br>config$recipients_script" | B["Recipient data (.csv)"<br>config$recipient_file]
-    C[Data source] --> |"rf_get_data()<br>config$data_script" | D["Records data(.csv)"<br>config$data_file]
-    F["Templates<br>config$content_template_file<br>config$html_template_file"] --> E
-    H["Computation scripts<br>config$computation_script_focal<br>config$computation_script_background"] --> E
-    B --> E("{Targets} pipeline<br>_targets.R")
-    D --> E
-    E --> |"rf_generate()"| G[Batch content and meta data<br>.html files]
-    G --> |"rf_dispatch_smtp()"| J[Feedback received by recipients]
-```
-
-Key terms:
-
- - Recipient: someone to receive feedback
- - Focal/background: whether the data relates to the recipient (focal), or not (background)
- - Template: a RMarkdown document defining how the data is manipulated and visualised
- - Computations: calculations or other processing done on the raw data prior to rendering them template
-
-```{r quick_start}
+```r
 library(recorderFeedback)
 
-#initialise a new project
-rf_init(path = "example")
-config <- config::get()
-
-#get recipients
-rf_get_recipients()
-knitr::kable(head(read.csv(config$recipients_file)))
-
-#get data
-rf_get_data()
-knitr::kable(head(read.csv(config$data_file)))
-
-#verify the data is all good
-rf_verify_data(T)
-
-#preflight checks before render
-rf_preflight(stage = "render")
-
-#render a single feedback item
-rf_render_single(recipient_id = 1)
-
-# run the pipeline
-batch_id <- "test_batch"
-rf_render_all(batch_id)
-
-#view the meta table
-meta_table <- read.csv(file.path("renders",batch_id,"/meta_table.csv"))
-knitr::kable(head(meta_table))
-
-#verify the batch
-rf_verify_batch(batch_id)
-#view content
-#rf_view_content(batch_id = batch_id,recipient_id = 3)
-
-#send the emails
-#rf_dispatch_smtp(batch_id, dry_run = TRUE)  # preflight only
-#rf_dispatch_smtp(batch_id)                  # send in test_mode
-#rf_dispatch_smtp(batch_id, confirm_live_send = TRUE) # required when test_mode = FALSE
-
-#preview a sample without sending
-#rf_dispatch_smtp(batch_id, preview_only = TRUE, preview_n = 5)
+# Creates a new folder with config, scripts, templates, and pipeline files
+rf_init(path = "my_feedback_project")
 ```
 
-## Dispatch Safety
+Then open `my_feedback_project/config.yml` and update paths/settings for your use case.
+
+### 2. Customize your scripts and template
+
+Edit the scaffolded files:
+
+- `scripts/get_recipients.R` to write `data/recipients.csv`
+- `scripts/get_data.R` to write `data/data.csv`
+- `scripts/computation.R` for your derived variables and summaries
+- `templates/content.Rmd` for the feedback content recipients will receive
+
+### 3. Run the workflow
+
+```r
+library(recorderFeedback)
+
+# Pull / refresh input files
+rf_get_recipients()
+rf_get_data()
+
+# Validate data and required project files
+rf_verify_data(verbose = TRUE)
+rf_preflight(stage = "render")
+
+# Render one recipient while iterating on template content
+rf_render_single(recipient_id = 1)
+
+# Render a full batch
+batch_id <- "2026_03_example"
+rf_render_all(batch_id = batch_id)
+
+# Check what rendered and what failed/skipped
+rf_verify_batch(batch_id)
+# rf_view_content(batch_id, recipient_id = 1)
+```
+
+### 4. Dispatch safely
+
+```r
+# Validate without sending
+rf_dispatch_smtp(batch_id, dry_run = TRUE)
+
+# In test_mode = TRUE, sends only to mail_test_recipient
+rf_dispatch_smtp(batch_id)
+
+# Required confirmation when test_mode = FALSE
+# rf_dispatch_smtp(batch_id, confirm_live_send = TRUE)
+```
+
+## Pipeline diagram
+
+```mermaid
+graph TD
+    A[Data source] --> |"rf_get_recipients()<br>config$recipients_script" | B["Recipients CSV<br>config$recipients_file"]
+    C[Data source] --> |"rf_get_data()<br>config$data_script" | D["Data CSV<br>config$data_file"]
+    H["Computation scripts<br>config$computation_script_focal<br>config$computation_script_bg"] --> E
+    F["Templates<br>config$content_template_file<br>config$html_template_file"] --> E
+    B --> E("targets pipeline<br>_targets.R")
+    D --> E
+    E --> |"rf_render_all()"| G["Rendered HTML + meta table<br>renders/<batch_id>/"]
+    G --> |"rf_dispatch_smtp()"| J[Recipient inboxes]
+```
+
+## Key terms
+
+
+- Recipient: a person or account receiving a feedback output.
+- Focal data: records associated with the specific recipient.
+- Background data: context records not tied to one recipient.
+- Template: the `Rmd` file that turns data into recipient-specific content.
+- Batch: one run of `rf_render_all()`, identified by `batch_id`.
+
+## Dispatch safety and observability
 
 `rf_dispatch_smtp()` now writes dispatch artifacts per batch:
 
@@ -142,7 +167,7 @@ Recipients excluded by this function are written to `meta_table.csv` with `rende
 
 ## Handling errors
 
-If rendering a template fails the pipeline will continue, but you won't have a `.html` file in the designated `renders/[batch_id]` folder. Using `rf_verify_batch()` will show you for which recipients the rendering failed. Using `targets::tar_meta(fields = "error")` will also tell you which targets failed and the corresponding error messages. Use `render_single(recipient_id)` to render an individual feedback item and view the detailed error message that is shown.
+If rendering a template fails the pipeline will continue, but you won't have a `.html` file in the designated `renders/[batch_id]` folder. Using `rf_verify_batch()` will show you for which recipients the rendering failed. Using `targets::tar_meta(fields = "error")` will also tell you which targets failed and the corresponding error messages. Use `rf_render_single(recipient_id)` to render an individual feedback item and view the detailed error message that is shown.
 
 Data QA in `rf_verify_data()` now includes:
 
@@ -151,10 +176,4 @@ Data QA in `rf_verify_data()` now includes:
 - optional recorder schema checks for columns like `date`, `species`, and `site`
 
 Use `rf_preflight(stage = "dispatch", batch_id = "my_batch")` to fail fast before dispatch.
-
-```{r cleanup, echo = FALSE}
-setwd("C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback")
-unlink("example", recursive=TRUE)
-unlink("example")
-```
 
