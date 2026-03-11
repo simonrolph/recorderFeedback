@@ -71,14 +71,24 @@
 <div class="section level2">
 <h2 id="generating-content">Generating Content<a class="anchor" aria-label="anchor" href="#generating-content"></a>
 </h2>
-<p>This vignette describes how <strong>recorderFeedback</strong>
-generates personalised feedback content, including how computations are
-integrated into the workflow.</p>
+<p>This vignette explains how to turn your loaded data into personalised
+feedback pages. It is aimed at new users who have already completed the
+“Getting Data” steps.</p>
+<div class="section level3">
+<h3 id="workflow-at-a-glance">Workflow At A Glance<a class="anchor" aria-label="anchor" href="#workflow-at-a-glance"></a>
+</h3>
+<p>The content stage has three parts:</p>
+<ol style="list-style-type: decimal">
+<li>Optional computations on focal and background data.</li>
+<li>Rendering one recipient for testing.</li>
+<li>Rendering all recipients as a batch.</li>
+</ol>
+</div>
 <div class="section level3">
 <h3 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a>
 </h3>
-<p>Content generation is controlled by your project’s configuration
-file, <code>config.yml</code>. Key entries include:</p>
+<p>Content generation is controlled by <code>config.yml</code>. Key
+entries are:</p>
 <ul>
 <li>
 <code>computation_script_focal</code>: Script for computations on
@@ -93,37 +103,43 @@ feedback.</li>
 <code>html_template_file</code>: HTML template for styling
 output.</li>
 </ul>
-<p>By default, both computation scripts point to
-<code>"scripts/computation.R"</code>, but you can specify different
-scripts if needed.</p>
+<p>By default, both computation script fields point to
+<code>"scripts/computation.R"</code>.</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">config</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"computation_script_focal"</span>,</span>
+<span>  <span class="st">"computation_script_bg"</span>,</span>
+<span>  <span class="st">"content_template_file"</span>,</span>
+<span>  <span class="st">"html_template_file"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="computations">Computations<a class="anchor" aria-label="anchor" href="#computations"></a>
 </h3>
-<p>During the content generation pipeline, you can run custom
-computations on your data. These scripts (referenced in
-<code>computation_script_focal</code> and
-<code>computation_script_bg</code>) allow you to summarise, analyse, or
-transform your data as required.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Run computations for focal and background data</span></span>
-<span><span class="fu"><a href="../reference/rf_do_computations.html">rf_do_computations</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>You can customise the computation scripts to suit your analysis
-needs. For example, you might calculate summary statistics, generate
-plots, or prepare tables for inclusion in feedback.</p>
+<p>Computation scripts let you prepare summaries and metrics before
+rendering. This is useful for totals, rankings, trends, and other values
+you want to reuse in templates.</p>
+<p>In normal use, computations are executed automatically as part of
+rendering. If you are building custom scripts, this is the core helper
+used internally:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">records</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_file</span><span class="op">)</span></span>
+<span><span class="va">computed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rf_do_computations.html">rf_do_computations</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">computation_script_bg</span>, <span class="va">records</span><span class="op">)</span></span></code></pre></div>
+<p>Your computation script should define
+<code>compute_objects(records_data)</code> and return an object (often a
+list) that can be used in templates.</p>
 </div>
 <div class="section level3">
 <h3 id="rendering-content">Rendering Content<a class="anchor" aria-label="anchor" href="#rendering-content"></a>
 </h3>
-<p>Content is generated using the template specified in
-<code>content_template_file</code> (an RMarkdown file). The function
-<code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> creates feedback for a specific
-recipient, while <code>rf_generate()</code> processes a batch.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Render feedback for a single recipient</span></span>
-<span><span class="fu"><a href="../reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p>For batch processing:</p>
+<p>Start by rendering a single recipient to check template logic before
+running a full batch.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Use a known recipient_id from recipients_file</span></span>
+<span><span class="fu"><a href="../reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<p>Then run the whole batch:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"example_batch"</span></span>
 <span><span class="fu"><a href="../reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -132,24 +148,42 @@ recipient, while <code>rf_generate()</code> processes a batch.</p>
 </h3>
 <ul>
 <li>
-<strong>RMarkdown template</strong>
-(<code>templates/content.Rmd</code>): Defines the structure and
-appearance of the feedback document. You can edit this to include custom
-text, tables, plots, and computed results.</li>
+<code>templates/content.Rmd</code>: Defines content structure and
+where computed objects are shown.</li>
 <li>
-<strong>HTML template</strong>
-(<code>templates/template.html</code>): Controls the look and feel of
-the final output.</li>
+<code>templates/template.html</code>: Controls final page styling
+and layout wrapper.</li>
 </ul>
+<p>Keep template edits small and test with
+<code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> after each change.</p>
 </div>
 <div class="section level3">
 <h3 id="viewing-and-verifying-output">Viewing and Verifying Output<a class="anchor" aria-label="anchor" href="#viewing-and-verifying-output"></a>
 </h3>
 <p>After generation, you can view and verify the content:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_view_content.html">rf_view_content</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span>, recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_view_content.html">rf_view_content</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span>, recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="common-first-run-issues">Common First-Run Issues<a class="anchor" aria-label="anchor" href="#common-first-run-issues"></a>
+</h3>
+<ul>
+<li>
+<code>meta_table.csv</code> missing: batch rendering did not
+complete.</li>
+<li>Template errors during render: test with
+<code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> to isolate the failing recipient.</li>
+<li>Missing recipient output: check that <code>recipient_id</code>
+values match between recipients and data files.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="next-step">Next Step<a class="anchor" aria-label="anchor" href="#next-step"></a>
+</h3>
+<p>After content renders cleanly, continue to the “Distributing Content”
+vignette to send output by email.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -163,7 +197,7 @@ the final output.</li>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

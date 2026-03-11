@@ -71,8 +71,22 @@
 <div class="section level2">
 <h2 id="distributing-content">Distributing Content<a class="anchor" aria-label="anchor" href="#distributing-content"></a>
 </h2>
-<p>This vignette describes how <strong>recorderFeedback</strong>
-distributes generated feedback to recipients.</p>
+<p>This vignette explains how to safely send generated feedback by
+email. It is designed for new users who have already rendered a batch
+successfully.</p>
+<div class="section level3">
+<h3 id="before-sending-any-email">Before Sending Any Email<a class="anchor" aria-label="anchor" href="#before-sending-any-email"></a>
+</h3>
+<p>Confirm these prerequisites first:</p>
+<ol style="list-style-type: decimal">
+<li>You have run <code>rf_render_all(batch_id)</code>.</li>
+<li>
+<code>renders/&lt;batch_id&gt;/meta_table.csv</code> exists.</li>
+<li>
+<code>rf_verify_batch(batch_id)</code> completes without blocking
+errors.</li>
+</ol>
+</div>
 <div class="section level3">
 <h3 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a>
 </h3>
@@ -96,7 +110,25 @@ details.</li>
 <code>mail_subject</code>: Subject line for feedback emails.</li>
 <li>
 <code>mail_test_recipient</code>: Address for test emails.</li>
+<li>
+<code>mail_creds</code>: Authentication mode
+(<code>"anonymous"</code> or <code>"envvar"</code>).</li>
+<li>
+<code>test_mode</code>: If <code>TRUE</code>, all messages are
+redirected to <code>mail_test_recipient</code>.</li>
 </ul>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">config</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>  <span class="st">"test_mode"</span>,</span>
+<span>  <span class="st">"mail_creds"</span>,</span>
+<span>  <span class="st">"mail_server"</span>,</span>
+<span>  <span class="st">"mail_port"</span>,</span>
+<span>  <span class="st">"mail_sender"</span>,</span>
+<span>  <span class="st">"mail_name"</span>,</span>
+<span>  <span class="st">"mail_subject"</span>,</span>
+<span>  <span class="st">"mail_test_recipient"</span></span>
+<span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="dispatching-feedback">Dispatching Feedback<a class="anchor" aria-label="anchor" href="#dispatching-feedback"></a>
@@ -105,24 +137,22 @@ details.</li>
 <code><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp()</a></code> to send emails to recipients. This
 function uses the configuration above to connect to your mail server and
 distribute feedback.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"example_batch"</span></span>
 <span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
-<p>You can test your email setup by sending to the address specified in
-<code>mail_test_recipient</code> before distributing to all
-recipients.</p>
+<p>For a safe first run, keep <code>test_mode: TRUE</code> in
+<code>config.yml</code>. This sends all outputs to
+<code>mail_test_recipient</code> instead of real recipient
+addresses.</p>
 </div>
 <div class="section level3">
 <h3 id="customising-email-content">Customising Email Content<a class="anchor" aria-label="anchor" href="#customising-email-content"></a>
 </h3>
 <ul>
-<li>
-<strong>Email formatting</strong> is controlled by the template
-specified in <code>content_template_file</code> and
-<code>html_template_file</code> in <code>rf_config.yml</code>.</li>
-<li>
-<strong>Email body and attachments</strong> are generated for each
-recipient using these templates.</li>
+<li>Email body content comes from <code>content_template_file</code> and
+<code>html_template_file</code>.</li>
+<li>Sending format is controlled by <code>email_format</code> (usually
+<code>templates/email_format.R</code>).</li>
 </ul>
 </div>
 <div class="section level3">
@@ -130,21 +160,36 @@ recipient using these templates.</li>
 </h3>
 <p>After dispatch, you can verify which emails were sent and check for
 any errors:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+<p>You should also inspect the status report email sent to
+<code>mail_test_recipient</code>.</p>
+</div>
+<div class="section level3">
+<h3 id="common-first-run-issues">Common First-Run Issues<a class="anchor" aria-label="anchor" href="#common-first-run-issues"></a>
+</h3>
+<ul>
+<li>Authentication failure: review <code>mail_creds</code>,
+username/password, host, and port.</li>
+<li>TLS/SSL mismatch: check <code>mail_use_tls</code> and
+<code>mail_use_ssl</code> for your SMTP provider.</li>
+<li>Footer email mismatch error: generated file email does not match the
+meta table row.</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
 <ul>
 <li>Email distribution is fully configurable via
-<code>rf_config.yml</code>.</li>
+<code>config.yml</code>.</li>
 <li>Use <code><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp()</a></code> to send feedback to
 recipients.</li>
-<li>Test and verify your setup before full distribution.</li>
+<li>Keep <code>test_mode: TRUE</code> for dry runs, then switch to
+<code>FALSE</code> for live sending.</li>
 </ul>
-<p>This approach ensures your feedback reaches recipients efficiently
-and</p>
+<p>This approach helps you validate delivery safely before contacting
+real recipients.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -158,7 +203,7 @@ and</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

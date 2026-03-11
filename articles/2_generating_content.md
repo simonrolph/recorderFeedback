@@ -1,0 +1,114 @@
+# Generating Content
+
+``` r
+library(recorderFeedback)
+```
+
+## Generating Content
+
+This vignette explains how to turn your loaded data into personalised
+feedback pages. It is aimed at new users who have already completed the
+“Getting Data” steps.
+
+### Workflow At A Glance
+
+The content stage has three parts:
+
+1.  Optional computations on focal and background data.
+2.  Rendering one recipient for testing.
+3.  Rendering all recipients as a batch.
+
+### Configuration
+
+Content generation is controlled by `config.yml`. Key entries are:
+
+- `computation_script_focal`: Script for computations on focal
+  (recipient-specific) data.
+- `computation_script_bg`: Script for background computations.
+- `content_template_file`: RMarkdown template for rendering feedback.
+- `html_template_file`: HTML template for styling output.
+
+By default, both computation script fields point to
+`"scripts/computation.R"`.
+
+``` r
+config <- config::get()
+config[c(
+  "computation_script_focal",
+  "computation_script_bg",
+  "content_template_file",
+  "html_template_file"
+)]
+```
+
+### Computations
+
+Computation scripts let you prepare summaries and metrics before
+rendering. This is useful for totals, rankings, trends, and other values
+you want to reuse in templates.
+
+In normal use, computations are executed automatically as part of
+rendering. If you are building custom scripts, this is the core helper
+used internally:
+
+``` r
+records <- read.csv(config$data_file)
+computed <- rf_do_computations(config$computation_script_bg, records)
+```
+
+Your computation script should define `compute_objects(records_data)`
+and return an object (often a list) that can be used in templates.
+
+### Rendering Content
+
+Start by rendering a single recipient to check template logic before
+running a full batch.
+
+``` r
+# Use a known recipient_id from recipients_file
+rf_render_single(recipient_id = 1)
+```
+
+Then run the whole batch:
+
+``` r
+batch_id <- "example_batch"
+rf_render_all(batch_id)
+```
+
+### Customising Templates
+
+- `templates/content.Rmd`: Defines content structure and where computed
+  objects are shown.
+- `templates/template.html`: Controls final page styling and layout
+  wrapper.
+
+Keep template edits small and test with
+[`rf_render_single()`](https://simonrolph.github.io/recorderFeedback/reference/rf_render_single.md)
+after each change.
+
+### Viewing and Verifying Output
+
+After generation, you can view and verify the content:
+
+``` r
+rf_view_content(batch_id = batch_id, recipient_id = 1)
+```
+
+``` r
+rf_verify_batch(batch_id)
+```
+
+### Common First-Run Issues
+
+- `meta_table.csv` missing: batch rendering did not complete.
+- Template errors during render: test with
+  [`rf_render_single()`](https://simonrolph.github.io/recorderFeedback/reference/rf_render_single.md)
+  to isolate the failing recipient.
+- Missing recipient output: check that `recipient_id` values match
+  between recipients and data files.
+
+### Next Step
+
+After content renders cleanly, continue to the “Distributing Content”
+vignette to send output by email.

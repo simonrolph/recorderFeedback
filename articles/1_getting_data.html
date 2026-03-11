@@ -71,15 +71,30 @@
 <div class="section level2">
 <h2 id="getting-data">Getting Data<a class="anchor" aria-label="anchor" href="#getting-data"></a>
 </h2>
-<p>This vignette explains how <strong>recorderFeedback</strong> loads
-recipient and observation data, and how you can configure and extend
-these steps for your own workflow.</p>
+<p>This vignette is for first-time users of
+<strong>recorderFeedback</strong>. It explains how recipient data and
+observation data are loaded into your project in a way that can be
+repeated every reporting cycle.</p>
+<div class="section level3">
+<h3 id="before-you-start">Before You Start<a class="anchor" aria-label="anchor" href="#before-you-start"></a>
+</h3>
+<p>You should have:</p>
+<ul>
+<li>A project created with <code><a href="../reference/rf_init.html">rf_init()</a></code>.</li>
+<li>A <code>config.yml</code> file in your project root.</li>
+<li>The package loaded with <code><a href="https://simonrolph.github.io/recorderFeedback/">library(recorderFeedback)</a></code>.</li>
+</ul>
+<p>If you have not initialised a project yet, run:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_init.html">rf_init</a></span><span class="op">(</span><span class="st">"my_feedback_project"</span><span class="op">)</span></span></code></pre></div>
+<p>Then work inside that folder so relative paths in
+<code>config.yml</code> resolve correctly.</p>
+</div>
 <div class="section level3">
 <h3 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a>
 </h3>
-<p>All data sources are defined in your project’s configuration file,
-<code>config.yml</code>, which is copied to your project during
-initialisation. The relevant entries are:</p>
+<p>Data input is controlled by your project’s <code>config.yml</code>.
+The most important fields are:</p>
 <ul>
 <li>
 <code>recipients_file</code>: Path to your recipients data (e.g.,
@@ -94,32 +109,72 @@ initialisation. The relevant entries are:</p>
 <code>data_script</code>: Script for loading records (e.g.,
 <code>"scripts/get_data.R"</code>).</li>
 </ul>
-<p>You can customise these paths and scripts to suit your data
-sources.</p>
+<p>Each <code>*_script</code> should create or update the corresponding
+<code>*_file</code>.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="va">config</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"recipients_script"</span>, <span class="st">"recipients_file"</span>, <span class="st">"data_script"</span>, <span class="st">"data_file"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="loading-recipients">Loading Recipients<a class="anchor" aria-label="anchor" href="#loading-recipients"></a>
 </h3>
-<p>The function <code><a href="../reference/rf_get_recipients.html">rf_get_recipients()</a></code> loads recipient data
-using the script specified in <code>recipients_script</code>. By
-default, this script reads from the file defined in
-<code>recipients_file</code>.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/rf_get_recipients.html">rf_get_recipients</a></span><span class="op">(</span><span class="op">)</span></span>
+<p><code><a href="../reference/rf_get_recipients.html">rf_get_recipients()</a></code> runs the script defined in
+<code>recipients_script</code>. That script should write a recipients
+table to <code>recipients_file</code>.</p>
+<p>At minimum, recipients data should include:</p>
+<ul>
+<li><code>recipient_id</code></li>
+<li><code>name</code></li>
+<li><code>email</code></li>
+</ul>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_get_recipients.html">rf_get_recipients</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">recipients</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">recipients_file</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">recipients</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="loading-records">Loading Records<a class="anchor" aria-label="anchor" href="#loading-records"></a>
 </h3>
-<p>Similarly, <code><a href="../reference/rf_get_data.html">rf_get_data()</a></code> loads observation data using
-the script specified in <code>data_script</code>, reading from the file
-defined in <code>data_file</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<p><code><a href="../reference/rf_get_data.html">rf_get_data()</a></code> runs the script defined in
+<code>data_script</code>. That script should write your raw records to
+<code>data_file</code>.</p>
+<p>Your records must include <code>recipient_id</code> so each record
+can be linked to a recipient.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_get_data.html">rf_get_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">records</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_file</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">records</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="validate-inputs-early">Validate Inputs Early<a class="anchor" aria-label="anchor" href="#validate-inputs-early"></a>
+</h3>
+<p>Run validation immediately after loading data. This catches missing
+files, missing columns, and recipient/data mismatches before
+rendering.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_data.html">rf_verify_data</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="common-first-run-issues">Common First-Run Issues<a class="anchor" aria-label="anchor" href="#common-first-run-issues"></a>
+</h3>
+<ul>
+<li>
+<code>Data file has not been updated</code>: your
+<code>scripts/get_data.R</code> script did not write to
+<code>config$data_file</code>.</li>
+<li>
+<code>Recipient file has not been updated</code>: your
+<code>scripts/get_recipients.R</code> script did not write to
+<code>config$recipients_file</code>.</li>
+<li>Missing column errors: ensure required columns are named exactly
+(<code>recipient_id</code>, <code>name</code>, <code>email</code>).</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="next-step">Next Step<a class="anchor" aria-label="anchor" href="#next-step"></a>
+</h3>
+<p>Once data loading works, continue to the “Generating Content”
+vignette to render recipient-specific reports.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -133,7 +188,7 @@ defined in <code>data_file</code>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

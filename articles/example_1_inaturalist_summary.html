@@ -67,26 +67,36 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonrolph.github.io/recorderFeedback/">recorderFeedback</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonrolph.github.io/recorderFeedback/">recorderFeedback</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This vignette demonstrates how to use
-<strong>recorderFeedback</strong> to fetch iNaturalist data for
-recipients, summarize it into personalized reports, and distribute the
-results via email. It walks through the full pipeline: setup, data
-collection, template creation, rendering, and distribution.</p>
+<p>This end-to-end example shows how to use
+<strong>recorderFeedback</strong> with iNaturalist data. It is written
+for new users, so each stage is explicit: initialise project, load
+recipients, fetch observations, render content, then distribute.</p>
+<div class="section level3">
+<h3 id="what-you-will-build">What You Will Build<a class="anchor" aria-label="anchor" href="#what-you-will-build"></a>
+</h3>
+<p>By the end you will have:</p>
+<ol style="list-style-type: decimal">
+<li>A recipients table linked to iNaturalist user IDs.</li>
+<li>A records table fetched from the iNaturalist API.</li>
+<li>A simple personalised report template.</li>
+<li>One test render and one batch render.</li>
+<li>Optional SMTP dispatch.</li>
+</ol>
+</div>
 </div>
 <div class="section level2">
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
-<p>Initialize a project directory and load configuration:</p>
+<p>Initialise a project directory and read config:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_init.html">rf_init</a></span><span class="op">(</span><span class="st">"inaturalist_example"</span><span class="op">)</span></span>
 <span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>This creates the working structure and loads the configuration
-settings defined in <code>config.yml</code>.</p>
+<p>Run subsequent commands from that project directory so relative paths
+in <code>config.yml</code> are valid.</p>
 </div>
 <div class="section level2">
 <h2 id="getting-data">Getting data<a class="anchor" aria-label="anchor" href="#getting-data"></a>
@@ -98,8 +108,7 @@ settings defined in <code>config.yml</code>.</p>
 generated. For this example, we manually define them in a script.</p>
 <p><strong>File: <code>scripts/get_recipients.R</code></strong></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># A script for getting recipients</span></span>
-<span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  email <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"simon@example.com"</span><span class="op">)</span>,</span>
 <span>  name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Simon"</span><span class="op">)</span>,</span>
@@ -109,7 +118,7 @@ generated. For this example, we manually define them in a script.</p>
 <p>Run the recipient script:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_get_recipients.html">rf_get_recipients</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p>Inspect the recipients file:</p>
+<p>Inspect recipients:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">recipients_file</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -118,8 +127,11 @@ generated. For this example, we manually define them in a script.</p>
 </h3>
 <p>We now pull iNaturalist observations for each recipient over the last
 30 days.</p>
-<p><strong>File: <code>scripts/get_data.R</code></strong></p>
+<p>Install required packages if needed:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"httr"</span>, <span class="st">"jsonlite"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><strong>File: <code>scripts/get_data.R</code></strong></p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://httr.r-lib.org/" class="external-link">httr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jeroen.r-universe.dev/jsonlite" class="external-link">jsonlite</a></span><span class="op">)</span></span>
 <span></span>
@@ -143,29 +155,38 @@ generated. For this example, we manually define them in a script.</p>
 <span>  <span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://httr.r-lib.org/reference/content.html" class="external-link">content</a></span><span class="op">(</span><span class="va">response</span>, as <span class="op">=</span> <span class="st">"text"</span>, encoding <span class="op">=</span> <span class="st">"UTF-8"</span><span class="op">)</span></span>
 <span>  <span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://jeroen.r-universe.dev/jsonlite/reference/fromJSON.html" class="external-link">fromJSON</a></span><span class="op">(</span><span class="va">data</span>, flatten <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>  </span>
-<span>  <span class="va">output</span> <span class="op">&lt;-</span> <span class="va">obs</span><span class="op">$</span><span class="va">results</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>record_id <span class="op">=</span> <span class="va">id</span>,</span>
-<span>           recipient_id <span class="op">=</span> <span class="va">user.id</span>,</span>
-<span>           date <span class="op">=</span> <span class="va">observed_on</span>,</span>
-<span>           common_name <span class="op">=</span> <span class="va">taxon.preferred_common_name</span>,</span>
-<span>           scientific_name <span class="op">=</span> <span class="va">taxon.name</span>,</span>
-<span>           species_group <span class="op">=</span> <span class="va">taxon.iconic_taxon_name</span><span class="op">)</span></span>
+<span>  <span class="va">output</span> <span class="op">&lt;-</span> <span class="va">obs</span><span class="op">$</span><span class="va">results</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"id"</span>,</span>
+<span>    <span class="st">"user.id"</span>,</span>
+<span>    <span class="st">"observed_on"</span>,</span>
+<span>    <span class="st">"taxon.preferred_common_name"</span>,</span>
+<span>    <span class="st">"taxon.name"</span>,</span>
+<span>    <span class="st">"taxon.iconic_taxon_name"</span></span>
+<span>  <span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"record_id"</span>,</span>
+<span>    <span class="st">"recipient_id"</span>,</span>
+<span>    <span class="st">"date"</span>,</span>
+<span>    <span class="st">"common_name"</span>,</span>
+<span>    <span class="st">"scientific_name"</span>,</span>
+<span>    <span class="st">"species_group"</span></span>
+<span>  <span class="op">)</span></span>
 <span>  </span>
 <span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">output</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">recipients</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">recipients_file</span><span class="op">)</span></span>
 <span><span class="va">observations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">recipients</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">observations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">observations</span>,</span>
-<span>                            <span class="fu">get_inat_observations</span><span class="op">(</span><span class="va">recipients</span><span class="op">$</span><span class="va">recipient_id</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">recipients</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">observations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="va">observations</span>,</span>
+<span>                        <span class="fu">get_inat_observations</span><span class="op">(</span><span class="va">recipients</span><span class="op">$</span><span class="va">recipient_id</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/write.table.html" class="external-link">write.csv</a></span><span class="op">(</span><span class="va">observations</span>, <span class="va">config</span><span class="op">$</span><span class="va">data_file</span>, row.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p>Fetch and verify the data:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_get_data.html">rf_get_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Run and verify:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_get_data.html">rf_get_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_data.html">rf_verify_data</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
@@ -183,9 +204,8 @@ summary for each recipient.</p>
 <li>Count of unique species recorded</li>
 <li>A table of recent observations</li>
 </ul>
-<p>(This is rendered with a <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> function because
-putting R markdown into R markdown is apparently hard without it getting
-confused.)</p>
+<p>(To keep this vignette self-contained, the template text is printed
+directly.)</p>
 <pre><code><span><span class="co">#&gt; ---</span></span>
 <span><span class="co">#&gt;  title: "iNaturalist Summary"</span></span>
 <span><span class="co">#&gt;  params:</span></span>
@@ -205,7 +225,6 @@ confused.)</p>
 <span><span class="co">#&gt;  ```{r setup, include=FALSE}</span></span>
 <span><span class="co">#&gt;  knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,</span></span>
 <span><span class="co">#&gt;                        fig.align = 'center', error = FALSE, results = 'asis')</span></span>
-<span><span class="co">#&gt;  library(dplyr)</span></span>
 <span><span class="co">#&gt;  ```</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;  # Hello `r params$recipient_name`!</span></span>
@@ -213,13 +232,9 @@ confused.)</p>
 <span><span class="co">#&gt;  You have recorded `r length(unique(params$focal_data$scientific_name))` species recently!</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;  ```{r table}</span></span>
-<span><span class="co">#&gt;  knitr::kable(</span></span>
-<span><span class="co">#&gt;    params$focal_data %&gt;%</span></span>
-<span><span class="co">#&gt;      select("Date" = date,</span></span>
-<span><span class="co">#&gt;             "Group" = species_group,</span></span>
-<span><span class="co">#&gt;             "Species" = scientific_name,</span></span>
-<span><span class="co">#&gt;             "Common name" = common_name)</span></span>
-<span><span class="co">#&gt;  )</span></span>
+<span><span class="co">#&gt;  table_data &lt;- params$focal_data[, c('date', 'species_group', 'scientific_name', 'common_name')]</span></span>
+<span><span class="co">#&gt;  names(table_data) &lt;- c('Date', 'Group', 'Species', 'Common name')</span></span>
+<span><span class="co">#&gt;  knitr::kable(table_data)</span></span>
 <span><span class="co">#&gt;  ```</span></span>
 <span><span class="co">#&gt;  </span></span>
 <span><span class="co">#&gt;  Best wishes,  </span></span>
@@ -229,10 +244,10 @@ confused.)</p>
 <h3 id="rendering">Rendering<a class="anchor" aria-label="anchor" href="#rendering"></a>
 </h3>
 <p>Render a single report for testing:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="st">"1152941"</span><span class="op">)</span></span></code></pre></div>
 <p>Render for all recipients:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"vignette_demo"</span></span>
 <span><span class="fu"><a href="../reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
@@ -241,10 +256,22 @@ confused.)</p>
 <div class="section level2">
 <h2 id="distribution">Distribution<a class="anchor" aria-label="anchor" href="#distribution"></a>
 </h2>
-<p>Finally, send the reports by email using the configured SMTP
-settings:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<p>Finally, send reports by email using configured SMTP settings. For
+first tests, keep <code>test_mode: TRUE</code> in
+<code>config.yml</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>
+</h2>
+<ul>
+<li>No records returned: verify the iNaturalist
+<code>recipient_id</code> values are valid user IDs.</li>
+<li>API errors: rerun later or reduce request size while testing.</li>
+<li>Render failure: test with <code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> and
+inspect the template chunk that fails.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
@@ -272,7 +299,7 @@ activity summaries.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
