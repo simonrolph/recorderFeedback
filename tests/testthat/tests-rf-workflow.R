@@ -9,6 +9,7 @@ test_that("Project initialisation works", {
   expect_true(dir.exists(file.path("data")))
   expect_true(dir.exists(file.path("renders")))
   expect_true(file.exists(file.path("config.yml")))
+  expect_true(file.exists(file.path("README.md")))
   expect_true(dir.exists(file.path("templates")))
 })
 

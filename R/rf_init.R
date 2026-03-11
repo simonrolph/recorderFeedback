@@ -1,6 +1,7 @@
 #' Initialise a recorder feedback project
 #'
 #' Sets up the directory structure and template files for a new feedback project.
+#' Also creates a `README.md` with a quick-start guide when one does not exist.
 #'
 #' @param path Character. Path to create the project.
 #' @return Invisible
@@ -18,16 +19,6 @@ rf_init <- function(path = ".") {
       }
     } else {
       message("Folder already exists: ", dir_path)
-    }
-  }
-
-  # Helper to make files
-  make_file <- function(file_path) {
-    if (!file.exists(file_path)) {
-      file.create(file_path)
-      message("Created file: ", file_path)
-    } else {
-      message("File already exists: ", file_path)
     }
   }
 
@@ -71,6 +62,9 @@ rf_init <- function(path = ".") {
             file.path(path, "scripts" , "computation.R"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_filter.R"),
             file.path(path, "scripts" , "focal_filter.R"), overwrite = FALSE)
+
+  file.copy(file.path(template_dir, "rf_README.md"),
+            file.path(path, "README.md"), overwrite = FALSE)
 
   if(path != "."){
     setwd(path)
