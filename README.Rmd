@@ -13,7 +13,8 @@ output: github_document
 - **Computation**: Run custom analyses or summaries on your data before generating feedback.
 - **Content Rendering**: Create personalised feedback documents for each recipient using RMarkdown templates.
 - **Batch Processing**: Automate feedback generation for multiple recipients.
-- **Email Dispatch**: Send feedback via email using SMTP.
+- **Email Dispatch**: Send feedback via email using SMTP with dry-run preflight,
+  retry/backoff, rate limiting, and resumable batches.
 
 Package functions are prefixed with `rf_`.
 
@@ -91,8 +92,28 @@ rf_verify_batch(batch_id)
 #rf_view_content(batch_id = batch_id,recipient_id = 3)
 
 #send the emails
-#rf_dispatch_smtp(batch_id)
+#rf_dispatch_smtp(batch_id, dry_run = TRUE)  # preflight only
+#rf_dispatch_smtp(batch_id)                  # send in test_mode
+#rf_dispatch_smtp(batch_id, confirm_live_send = TRUE) # required when test_mode = FALSE
 ```
+
+## Dispatch Safety
+
+`rf_dispatch_smtp()` now writes dispatch artifacts per batch:
+
+- `renders/<batch_id>/dispatch_log.csv`: one row per send attempt.
+- `renders/<batch_id>/dispatch_summary.csv`: run-level summary metrics.
+
+Recommended send sequence:
+
+1. Keep `test_mode: TRUE` in `config.yml`.
+2. Run `rf_dispatch_smtp(batch_id, dry_run = TRUE)` to validate rows and files.
+3. Run `rf_dispatch_smtp(batch_id)` for test-recipient sends.
+4. Switch to `test_mode: FALSE` only when ready, and use
+    `rf_dispatch_smtp(batch_id, confirm_live_send = TRUE)`.
+
+If a run is interrupted, rerun with `resume = TRUE` to skip recipients already
+marked as `Success` in `dispatch_log.csv`.
 
 ## Selective Rendering
 

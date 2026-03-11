@@ -23,3 +23,6 @@ default:
   mail_subject: "Your feedback"
   mail_creds: "anonymous"
   mail_test_recipient: 'test@test.com'
+  mail_retry_max: 3
+  mail_retry_backoff_sec: 2
+  mail_rate_per_minute: 60

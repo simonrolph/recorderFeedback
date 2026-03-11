@@ -4,14 +4,40 @@
 \alias{rf_dispatch_smtp}
 \title{Dispatch feedback via SMTP email}
 \usage{
-rf_dispatch_smtp(batch_id)
+rf_dispatch_smtp(
+  batch_id,
+  dry_run = FALSE,
+  resume = TRUE,
+  confirm_live_send = FALSE,
+  max_retries = NULL,
+  retry_backoff_sec = NULL,
+  rate_per_minute = NULL
+)
 }
 \arguments{
 \item{batch_id}{Character. Identifier for the batch.}
+
+\item{dry_run}{Logical. If TRUE, do not send mail; only validate and write logs.}
+
+\item{resume}{Logical. If TRUE, skip recipients already marked `Success` in
+`renders/<batch_id>/dispatch_log.csv`.}
+
+\item{confirm_live_send}{Logical. Must be TRUE to send to real recipients when
+`test_mode` is FALSE.}
+
+\item{max_retries}{Integer. Number of retries after the first failed attempt.
+Defaults to `config$mail_retry_max`.}
+
+\item{retry_backoff_sec}{Numeric. Base seconds for exponential backoff.
+Defaults to `config$mail_retry_backoff_sec`.}
+
+\item{rate_per_minute}{Numeric. Maximum send attempts per minute.
+Defaults to `config$mail_rate_per_minute`.}
 }
 \value{
-Message indicating status.
+Invisible named list with `log_file`, `summary_file`, and `summary`.
 }
 \description{
-Sends generated feedback files to recipients using SMTP.
+Sends rendered feedback files to recipients via SMTP with preflight checks,
+retries, rate limiting, and dispatch logging.
 }

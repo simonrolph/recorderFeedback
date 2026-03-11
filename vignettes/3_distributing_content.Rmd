@@ -45,6 +45,9 @@ Distribution settings are managed in your project's `config.yml` file. Key entri
 - `mail_test_recipient`: Address for test emails.
 - `mail_creds`: Authentication mode (`"anonymous"` or `"envvar"`).
 - `test_mode`: If `TRUE`, all messages are redirected to `mail_test_recipient`.
+- `mail_retry_max`: Number of retries after first failed send attempt.
+- `mail_retry_backoff_sec`: Base backoff in seconds (uses exponential backoff).
+- `mail_rate_per_minute`: Maximum send attempts per minute.
 
 ```{r show_mail_config}
 config <- config::get()
@@ -69,8 +72,26 @@ batch_id <- "example_batch"
 rf_dispatch_smtp(batch_id)
 ```
 
+For a preflight check without sending any emails:
+
+```{r dispatch_dry_run, eval=FALSE}
+rf_dispatch_smtp(batch_id, dry_run = TRUE)
+```
+
+To continue a previously interrupted run and skip already successful sends:
+
+```{r dispatch_resume, eval=FALSE}
+rf_dispatch_smtp(batch_id, resume = TRUE)
+```
+
 For a safe first run, keep `test_mode: TRUE` in `config.yml`.
 This sends all outputs to `mail_test_recipient` instead of real recipient addresses.
+
+If `test_mode: FALSE`, you must explicitly confirm a live send:
+
+```{r dispatch_live_confirm, eval=FALSE}
+rf_dispatch_smtp(batch_id, confirm_live_send = TRUE)
+```
 
 ## Customising Email Content
 
@@ -85,7 +106,10 @@ After dispatch, you can verify which emails were sent and check for any errors:
 rf_verify_batch(batch_id)
 ```
 
-You should also inspect the status report email sent to `mail_test_recipient`.
+Inspect the generated dispatch files:
+
+- `renders/<batch_id>/dispatch_log.csv`: One row per recipient send attempt.
+- `renders/<batch_id>/dispatch_summary.csv`: Summary metrics for the run.
 
 ## Common First-Run Issues
 

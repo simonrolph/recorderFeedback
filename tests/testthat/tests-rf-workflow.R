@@ -161,3 +161,71 @@ test_that("Single feedback item renders", {
     expect_silent(rf_render_single(recipient_id = 1))
   })
 })
+
+test_that("Dispatch dry run writes logs and summary", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "dispatch-dry-run")
+  batch_id <- "dispatch_dry_run"
+
+  withr::with_dir(tmp, {
+    rf_render_all(batch_id)
+    result <- rf_dispatch_smtp(batch_id, dry_run = TRUE)
+
+    expect_true(file.exists(result$log_file))
+    expect_true(file.exists(result$summary_file))
+
+    log_tbl <- read.csv(result$log_file, stringsAsFactors = FALSE)
+    summary_tbl <- read.csv(result$summary_file, stringsAsFactors = FALSE)
+
+    expect_true(nrow(log_tbl) > 0)
+    expect_true(all(log_tbl$dry_run))
+    expect_true(all(log_tbl$status %in% c("DryRun", "Failed")))
+    expect_true(nrow(summary_tbl) == 1)
+    expect_true(summary_tbl$dry_run[1])
+  })
+})
+
+test_that("Dispatch resume skips successful recipients", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "dispatch-resume")
+  batch_id <- "dispatch_resume"
+
+  withr::with_dir(tmp, {
+    rf_render_all(batch_id)
+    first <- rf_dispatch_smtp(batch_id, dry_run = TRUE, resume = FALSE)
+    first_log <- read.csv(first$log_file, stringsAsFactors = FALSE)
+    expect_true(nrow(first_log) > 0)
+
+    target_id <- first_log$recipient_id[1]
+    target_count_before <- nrow(first_log[first_log$recipient_id == target_id, , drop = FALSE])
+
+    appended_success <- data.frame(
+      timestamp = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
+      batch_id = batch_id,
+      recipient_id = target_id,
+      email = first_log$email[1],
+      status = "Success",
+      attempt = 1L,
+      error_type = NA_character_,
+      message = "Synthetic success for resume test",
+      dry_run = TRUE,
+      stringsAsFactors = FALSE
+    )
+    write.table(
+      appended_success,
+      file = first$log_file,
+      sep = ",",
+      row.names = FALSE,
+      col.names = FALSE,
+      append = TRUE,
+      qmethod = "double"
+    )
+
+    rf_dispatch_smtp(batch_id, dry_run = TRUE, resume = TRUE)
+
+    final_log <- read.csv(first$log_file, stringsAsFactors = FALSE)
+    latest_target_rows <- final_log[final_log$recipient_id == target_id, , drop = FALSE]
+
+    expect_true(nrow(latest_target_rows) == (target_count_before + 1))
+  })
+})

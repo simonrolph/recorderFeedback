@@ -227,8 +227,20 @@ Finally, send reports by email using configured SMTP settings.
 For first tests, keep `test_mode: TRUE` in `config.yml`.
 
 ```{r, eval = FALSE}
+# Preflight validation only (no emails sent)
+rf_dispatch_smtp(batch_id = batch_id, dry_run = TRUE)
+
+# Send in test mode
 rf_dispatch_smtp(batch_id = batch_id)
+
+# Required when sending to real recipients (test_mode: FALSE)
+rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
 ```
+
+Dispatch logs are written to:
+
+- `renders/<batch_id>/dispatch_log.csv`
+- `renders/<batch_id>/dispatch_summary.csv`
 
 # Troubleshooting
 

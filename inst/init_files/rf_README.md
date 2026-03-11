@@ -41,7 +41,24 @@ rf_verify_batch(batch_id = batch_id)
 rf_render_single(recipient_id = 1)
 ```
 
-8. Remove this section.
+8. Preflight and test dispatch.
+
+```r
+# Validate dispatch rows/files without sending
+rf_dispatch_smtp(batch_id = batch_id, dry_run = TRUE)
+
+# Send in test mode (config.yml test_mode: TRUE)
+rf_dispatch_smtp(batch_id = batch_id)
+```
+
+9. Move to live dispatch only when ready.
+
+```r
+# Required safeguard when config.yml test_mode: FALSE
+rf_dispatch_smtp(batch_id = batch_id, confirm_live_send = TRUE)
+```
+
+10. Remove this section.
 	Once your workflow is stable, delete this whole "Getting Started" block and replace it with project-specific notes.
 
 ## What Was Created
@@ -63,6 +80,8 @@ rf_render_single(recipient_id = 1)
 4. Validate data using `rf_verify_data()`.
 5. Render output with `rf_render_all(batch_id = "my_batch")`.
 6. Check results with `rf_verify_batch(batch_id = "my_batch")`.
+7. Run dispatch preflight with `rf_dispatch_smtp(batch_id = "my_batch", dry_run = TRUE)`.
+8. Dispatch with `rf_dispatch_smtp(batch_id = "my_batch")`.
 
 ## Useful Functions
 
@@ -73,5 +92,6 @@ rf_render_single(recipient_id = 1)
 - `rf_render_all()`
 - `rf_verify_batch()`
 - `rf_render_single(recipient_id = 1)`
+- `rf_dispatch_smtp(batch_id = "my_batch", dry_run = TRUE)`
 
 See package vignettes for complete examples.
