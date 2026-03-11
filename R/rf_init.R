@@ -2,6 +2,7 @@
 #'
 #' Sets up the directory structure and template files for a new feedback project.
 #' Also creates a `README.md` with a quick-start guide when one does not exist.
+#' Also creates a root `.gitignore` when one does not exist.
 #'
 #' @param path Character. Path to create the project.
 #' @return Invisible
@@ -65,6 +66,8 @@ rf_init <- function(path = ".") {
 
   file.copy(file.path(template_dir, "rf_README.md"),
             file.path(path, "README.md"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_gitignore"),
+            file.path(path, ".gitignore"), overwrite = FALSE)
 
   if(path != "."){
     setwd(path)
