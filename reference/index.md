@@ -4,6 +4,8 @@
 
 - [`rf_init()`](https://simonrolph.github.io/recorderFeedback/reference/rf_init.md)
   : Initialise a recorder feedback project
+- [`rf_preflight()`](https://simonrolph.github.io/recorderFeedback/reference/rf_preflight.md)
+  : Preflight validation before render or dispatch
 
 ## Getting Data
 

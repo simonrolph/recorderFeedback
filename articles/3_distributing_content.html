@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">recorderFeedback</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,6 +86,14 @@ successfully.</p>
 <code>rf_verify_batch(batch_id)</code> completes without blocking
 errors.</li>
 </ol>
+<p>You can run one preflight command before rendering and
+dispatching:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Fail fast before render</span></span>
+<span><span class="fu"><a href="../reference/rf_preflight.html">rf_preflight</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"render"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Fail fast before dispatch</span></span>
+<span><span class="fu"><a href="../reference/rf_preflight.html">rf_preflight</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"dispatch"</span>, batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a>
@@ -109,6 +117,14 @@ details.</li>
 <li>
 <code>mail_subject</code>: Subject line for feedback emails.</li>
 <li>
+<code>mail_subject_template</code>: Subject template supporting
+variables like <code>{{name}}</code>, <code>{{recipient_id}}</code>,
+<code>{{campaign_name}}</code>, and <code>{{batch_id}}</code>.</li>
+<li>
+<code>mail_body_prefix_template</code>,
+<code>mail_body_suffix_template</code>: Optional HTML blocks inserted
+before/after rendered content with the same variable support.</li>
+<li>
 <code>mail_test_recipient</code>: Address for test emails.</li>
 <li>
 <code>mail_creds</code>: Authentication mode
@@ -116,8 +132,28 @@ details.</li>
 <li>
 <code>test_mode</code>: If <code>TRUE</code>, all messages are
 redirected to <code>mail_test_recipient</code>.</li>
+<li>
+<code>mail_retry_max</code>: Number of retries after first failed
+send attempt.</li>
+<li>
+<code>mail_retry_backoff_sec</code>: Base backoff in seconds (uses
+exponential backoff).</li>
+<li>
+<code>mail_rate_per_minute</code>: Maximum send attempts per
+minute.</li>
+<li>
+<code>mail_attachments_col</code>: Column name in
+<code>meta_table.csv</code> containing attachment paths (delimited by
+<code>,</code>, <code>;</code>, or <code>|</code>).</li>
+<li>
+<code>mail_inline_images_col</code>: Column name in
+<code>meta_table.csv</code> containing inline image paths (delimited by
+<code>,</code>, <code>;</code>, or <code>|</code>).</li>
+<li>
+<code>campaign_name</code>, <code>campaign_metadata</code>: Campaign
+context used in templates.</li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">config</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"test_mode"</span>,</span>
@@ -137,13 +173,30 @@ redirected to <code>mail_test_recipient</code>.</li>
 <code><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp()</a></code> to send emails to recipients. This
 function uses the configuration above to connect to your mail server and
 distribute feedback.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"example_batch"</span></span>
 <span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+<p>For a preflight check without sending any emails:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>To continue a previously interrupted run and skip already successful
+sends:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, resume <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Preview a sample without sending any emails:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, preview_only <span class="op">=</span> <span class="cn">TRUE</span>, preview_n <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<p>Preview specific recipients:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, preview_only <span class="op">=</span> <span class="cn">TRUE</span>, preview_recipient_ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">101</span>, <span class="fl">205</span>, <span class="fl">309</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>For a safe first run, keep <code>test_mode: TRUE</code> in
 <code>config.yml</code>. This sends all outputs to
 <code>mail_test_recipient</code> instead of real recipient
 addresses.</p>
+<p>If <code>test_mode: FALSE</code>, you must explicitly confirm a live
+send:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, confirm_live_send <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="customising-email-content">Customising Email Content<a class="anchor" aria-label="anchor" href="#customising-email-content"></a>
@@ -153,6 +206,13 @@ addresses.</p>
 <code>html_template_file</code>.</li>
 <li>Sending format is controlled by <code>email_format</code> (usually
 <code>templates/email_format.R</code>).</li>
+<li>Subject/body templating tokens include recipient fields from
+<code>meta_table.csv</code> plus campaign tokens such as
+<code>{{campaign_name}}</code>, <code>{{campaign_date}}</code>,
+<code>{{dispatch_timestamp}}</code>, and <code>{{batch_id}}</code>.</li>
+<li>To include attachments/inline images, add columns to
+<code>meta_table.csv</code> matching <code>mail_attachments_col</code>
+and <code>mail_inline_images_col</code> with file paths.</li>
 </ul>
 </div>
 <div class="section level3">
@@ -160,10 +220,20 @@ addresses.</p>
 </h3>
 <p>After dispatch, you can verify which emails were sent and check for
 any errors:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
-<p>You should also inspect the status report email sent to
-<code>mail_test_recipient</code>.</p>
+<p>Inspect the generated dispatch files:</p>
+<ul>
+<li>
+<code>renders/&lt;batch_id&gt;/dispatch_log.csv</code>: One row per
+recipient send attempt.</li>
+<li>
+<code>renders/&lt;batch_id&gt;/dispatch_summary.csv</code>: Summary
+metrics for the run.</li>
+<li>
+<code>renders/&lt;batch_id&gt;/dispatch_preview/preview_index.csv</code>:
+Preview index when preview mode is used.</li>
+</ul>
 </div>
 <div class="section level3">
 <h3 id="common-first-run-issues">Common First-Run Issues<a class="anchor" aria-label="anchor" href="#common-first-run-issues"></a>
@@ -175,6 +245,9 @@ username/password, host, and port.</li>
 <code>mail_use_ssl</code> for your SMTP provider.</li>
 <li>Footer email mismatch error: generated file email does not match the
 meta table row.</li>
+<li>QA failures from <code><a href="../reference/rf_verify_data.html">rf_verify_data()</a></code>: duplicate
+<code>recipient_id</code>, missing/invalid emails, or optional recorder
+schema checks (<code>date/species/site</code>).</li>
 </ul>
 </div>
 <div class="section level3">

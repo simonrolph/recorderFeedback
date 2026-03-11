@@ -6,7 +6,7 @@ it to disk.
 ## Usage
 
 ``` r
-rf_make_meta_table(x, batch_id, recipient_data)
+rf_make_meta_table(x, batch_id, recipient_data, selection_data = NULL)
 ```
 
 ## Arguments
@@ -22,6 +22,10 @@ rf_make_meta_table(x, batch_id, recipient_data)
 - recipient_data:
 
   Data frame. Recipient information to join.
+
+- selection_data:
+
+  Data frame. Recipient selection information.
 
 ## Value
 

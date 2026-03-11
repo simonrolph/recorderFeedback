@@ -25,6 +25,8 @@ Content generation is controlled by `config.yml`. Key entries are:
 - `computation_script_focal`: Script for computations on focal
   (recipient-specific) data.
 - `computation_script_bg`: Script for background computations.
+- `recipient_select_script`: Optional script for selecting which
+  recipients to render in a batch.
 - `content_template_file`: RMarkdown template for rendering feedback.
 - `html_template_file`: HTML template for styling output.
 
@@ -36,6 +38,7 @@ config <- config::get()
 config[c(
   "computation_script_focal",
   "computation_script_bg",
+  "recipient_select_script",
   "content_template_file",
   "html_template_file"
 )]
@@ -75,6 +78,91 @@ Then run the whole batch:
 batch_id <- "example_batch"
 rf_render_all(batch_id)
 ```
+
+### Rendering Only Selected Recipients
+
+Batch rendering can be filtered with the script referenced by
+`recipient_select_script`. That script should define
+`recipient_select(recipients, data, config)` and return one of:
+
+- `NULL` to render everyone.
+- A logical vector with one value per row in `recipients`.
+- A vector of `recipient_id` values to render.
+- A data frame containing `recipient_id`, `selected`, and optional
+  `skip_reason`.
+
+For example, to render only recipients that have at least five records
+and record why others were skipped:
+
+``` r
+recipient_select <- function(recipients, data, config) {
+  counts <- aggregate(list(n = data$recipient_id), by = list(recipient_id = data$recipient_id), FUN = length)
+  counts <- merge(recipients["recipient_id"], counts, by = "recipient_id", all.x = TRUE)
+  counts$n[is.na(counts$n)] <- 0
+
+  data.frame(
+    recipient_id = counts$recipient_id,
+    selected = counts$n >= 5,
+    skip_reason = ifelse(counts$n >= 5, NA_character_, "Fewer than 5 records"),
+    stringsAsFactors = FALSE
+  )
+}
+```
+
+Skipped recipients remain in `renders/<batch_id>/meta_table.csv` with
+`render_status = "skipped"`, but no HTML file is produced for them.
+
+### Using Location-Based Feedback Instead of Individual-Based Feedback
+
+You can use `recorderFeedback` for place-based reporting (for example,
+“all species recorded in location X”) rather than person-based
+reporting.
+
+The main idea is:
+
+1.  Keep one row per email recipient in `recipients_file`.
+2.  Add location fields to recipients (for example `location_id`,
+    `location_name`).
+3.  Ensure your records data includes a matching location field.
+4.  Change `scripts/focal_filter.R` so focal data is filtered by
+    location, not by recorder identity.
+
+Required recipient columns are still `recipient_id`, `name`, and
+`email`, but you can add any extra columns needed for filtering and
+template content.
+
+Example `focal_filter()` for location-based emails:
+
+``` r
+focal_filter <- function(all_data, recipient_id) {
+  config <- config::get()
+  recipients <- read.csv(config$recipients_file, stringsAsFactors = FALSE)
+
+  rec <- recipients[recipients$recipient_id == recipient_id, , drop = FALSE]
+  if (nrow(rec) == 0) {
+    stop("No recipient row for recipient_id = ", recipient_id)
+  }
+
+  # Each recipient row maps to a location of interest.
+  loc <- rec$location_id[1]
+
+  # Focal data now means all records in that location.
+  focal_data <- subset(all_data, location_id == loc)
+
+  focal_data
+}
+```
+
+Once this is in place,
+[`rf_render_single()`](https://simonrolph.github.io/recorderFeedback/reference/rf_render_single.md)
+and
+[`rf_render_all()`](https://simonrolph.github.io/recorderFeedback/reference/rf_render_all.md)
+work as normal, but each email can now summarise all records from the
+recipient’s location.
+
+If your source data has coordinates instead of a `location_id`, you can
+apply a spatial filter in `focal_filter()` using polygons or bounding
+boxes from the recipient row.
 
 ### Customising Templates
 

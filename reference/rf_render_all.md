@@ -12,7 +12,8 @@ rf_render_all(batch_id)
 
 - batch_id:
 
-  Character. Identifier for the batch.
+  Character. Identifier for the batch. Recipient selection can be
+  customised in config.yml via recipient_select_script.
 
 ## Value
 

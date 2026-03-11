@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">recorderFeedback</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -260,7 +260,19 @@ directly.)</p>
 first tests, keep <code>test_mode: TRUE</code> in
 <code>config.yml</code>.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># Preflight validation only (no emails sent)</span></span>
+<span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Send in test mode</span></span>
+<span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Required when sending to real recipients (test_mode: FALSE)</span></span>
+<span><span class="fu"><a href="../reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span>, confirm_live_send <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p>Dispatch logs are written to:</p>
+<ul>
+<li><code>renders/&lt;batch_id&gt;/dispatch_log.csv</code></li>
+<li><code>renders/&lt;batch_id&gt;/dispatch_summary.csv</code></li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="troubleshooting">Troubleshooting<a class="anchor" aria-label="anchor" href="#troubleshooting"></a>

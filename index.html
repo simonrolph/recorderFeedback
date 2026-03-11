@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">recorderFeedback</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,342 +56,201 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="recorderfeedback">recorderFeedback<a class="anchor" aria-label="anchor" href="#recorderfeedback"></a>
 </h1></div>
-<p><strong>recorderFeedback</strong> is an R package for generating personalised, data-driven feedback, originally designed for citizen science wildlife recording but adaptable to other domains. The package provides tools to set up a feedback workflow, load data, generate content, and distribute feedback to recipients.</p>
+<p><code>recorderFeedback</code> helps you run an end-to-end feedback workflow in R:</p>
+<ul>
+<li>collect recipients and data</li>
+<li>compute recipient-level summaries</li>
+<li>render personalised HTML feedback</li>
+<li>dispatch feedback by email (with safety checks and logs)</li>
+</ul>
+<p>It was designed for wildlife recording and citizen science, but the workflow is general and can be adapted to other domains.</p>
+<p>All exported functions are prefixed with <code>rf_</code>.</p>
 <div class="section level2">
-<h2 id="features">Features<a class="anchor" aria-label="anchor" href="#features"></a>
+<h2 id="what-the-package-does">What the package does<a class="anchor" aria-label="anchor" href="#what-the-package-does"></a>
 </h2>
+<p>The package provides opinionated building blocks for a repeatable campaign workflow:</p>
 <ul>
 <li>
-<strong>Project Initialisation</strong>: Quickly scaffold a new feedback project with all necessary files and folders.</li>
+<code><a href="reference/rf_init.html">rf_init()</a></code> scaffolds a project structure and starter files.</li>
 <li>
-<strong>Data Loading</strong>: Import recipient and observation data from configurable sources.</li>
+<code><a href="reference/rf_get_recipients.html">rf_get_recipients()</a></code> and <code><a href="reference/rf_get_data.html">rf_get_data()</a></code> populate your <code>data/</code> inputs.</li>
 <li>
-<strong>Computation</strong>: Run custom analyses or summaries on your data before generating feedback.</li>
+<code><a href="reference/rf_verify_data.html">rf_verify_data()</a></code> and <code><a href="reference/rf_preflight.html">rf_preflight()</a></code> catch problems early.</li>
 <li>
-<strong>Content Rendering</strong>: Create personalised feedback documents for each recipient using RMarkdown templates.</li>
+<code><a href="reference/rf_render_single.html">rf_render_single()</a></code> and <code><a href="reference/rf_render_all.html">rf_render_all()</a></code> generate recipient content.</li>
 <li>
-<strong>Batch Processing</strong>: Automate feedback generation for multiple recipients.</li>
+<code><a href="reference/rf_verify_batch.html">rf_verify_batch()</a></code> and <code><a href="reference/rf_view_content.html">rf_view_content()</a></code> help QA outputs.</li>
 <li>
-<strong>Email Dispatch</strong>: Send feedback via email using SMTP.</li>
+<code><a href="reference/rf_dispatch_smtp.html">rf_dispatch_smtp()</a></code> sends emails with dry-run, resume, retries, and rate limiting.</li>
 </ul>
-<p>Package functions are prefixed with <code>rf_</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="workflow-at-a-glance">Workflow at a glance<a class="anchor" aria-label="anchor" href="#workflow-at-a-glance"></a>
+</h2>
+<p>After <code><a href="reference/rf_init.html">rf_init()</a></code>, your project includes:</p>
+<ul>
+<li>
+<code>config.yml</code>: central settings (file paths, templates, email options, test mode)</li>
+<li>
+<code>scripts/</code>: data retrieval and computation scripts you customize</li>
+<li>
+<code>templates/content.Rmd</code>: per-recipient feedback template</li>
+<li>
+<code>templates/template.html</code>: optional HTML wrapper</li>
+<li>
+<code>_targets.R</code> and <code>run_pipeline.R</code>: batch orchestration</li>
+<li>
+<code>renders/</code>: output folder for rendered files and dispatch logs</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>Install from GitHub using <code>devtools</code>:</p>
+<p>Install from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"simonrolph/recorderFeedback"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="quick-start">Quick Start<a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>When you initialise a project with <code><a href="reference/rf_init.html">rf_init()</a></code>, files are copied to set up your workflow, ensuring you have all the necessary templates, scripts, and configuration to get started quickly.</p>
+<div class="section level3">
+<h3 id="id_1-create-a-new-feedback-project">1. Create a new feedback project<a class="anchor" aria-label="anchor" href="#id_1-create-a-new-feedback-project"></a>
+</h3>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonrolph.github.io/recorderFeedback/">recorderFeedback</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Creates a new folder with config, scripts, templates, and pipeline files</span></span>
+<span><span class="fu"><a href="reference/rf_init.html">rf_init</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"my_feedback_project"</span><span class="op">)</span></span></code></pre></div>
+<p>Then open <code>my_feedback_project/config.yml</code> and update paths/settings for your use case.</p>
+</div>
+<div class="section level3">
+<h3 id="id_2-customize-your-scripts-and-template">2. Customize your scripts and template<a class="anchor" aria-label="anchor" href="#id_2-customize-your-scripts-and-template"></a>
+</h3>
+<p>Edit the scaffolded files:</p>
 <ul>
 <li>
-<code>config.yml</code>: The central configuration file referenced in the README, where you set paths and options for your project.</li>
+<code>scripts/get_recipients.R</code> to write <code>data/recipients.csv</code>
+</li>
 <li>
-<code>scripts/computation.R</code>, <code>scripts/get_data.R</code>, <code>scripts/get_recipients.R</code>: Scripts for loading data, recipients, and running computations, matching the workflow steps outlined in the README.</li>
+<code>scripts/get_data.R</code> to write <code>data/data.csv</code>
+</li>
 <li>
-<code>templates/content.Rmd</code>, <code>templates/email_format.R</code>, <code>templates/template.html</code>: Templates for rendering the feedback and formatting emails</li>
+<code>scripts/computation.R</code> for your derived variables and summaries</li>
 <li>
-<code>run_pipeline.R</code>, <code>_targets.R</code>: Pipeline orchestration scripts, supporting batch processing and automation</li>
+<code>templates/content.Rmd</code> for the feedback content recipients will receive</li>
 </ul>
-<p>This diagram attempts to explain how it fits together:</p>
-<pre class="mermaid"><code>graph TD
-    A[Data source] --&gt; |"rf_get_recipients()&lt;br&gt;config$recipients_script" | B["Recipient data (.csv)"&lt;br&gt;config$recipient_file]
-    C[Data source] --&gt; |"rf_get_data()&lt;br&gt;config$data_script" | D["Records data(.csv)"&lt;br&gt;config$data_file]
-    F["Templates&lt;br&gt;config$content_template_file&lt;br&gt;config$html_template_file"] --&gt; E
-    H["Computation scripts&lt;br&gt;config$computation_script_focal&lt;br&gt;config$computation_script_background"] --&gt; E
-    B --&gt; E("{Targets} pipeline&lt;br&gt;_targets.R")
-    D --&gt; E
-    E --&gt; |"rf_generate()"| G[Batch content and meta data&lt;br&gt;.html files]
-    G --&gt; |"rf_dispatch_smtp()"| J[Feedback received by recipients]</code></pre>
-<p>Key terms:</p>
-<ul>
-<li>Recipient: someone to receive feedback</li>
-<li>Focal/background: whether the data relates to the recipient (focal), or not (background)</li>
-<li>Template: a RMarkdown document defining how the data is manipulated and visualised</li>
-<li>Computations: calculations or other processing done on the raw data prior to rendering them template</li>
-</ul>
+</div>
+<div class="section level3">
+<h3 id="id_3-run-the-workflow">3. Run the workflow<a class="anchor" aria-label="anchor" href="#id_3-run-the-workflow"></a>
+</h3>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://simonrolph.github.io/recorderFeedback/">recorderFeedback</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#initialise a new project</span></span>
-<span><span class="fu"><a href="reference/rf_init.html">rf_init</a></span><span class="op">(</span>path <span class="op">=</span> <span class="st">"example"</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="do">## Created folder: example/data</span></span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a></span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="do">##   Added .gitignore to: example/data</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="do">## Created folder: example/templates</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="do">## Created folder: example/renders</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="do">## Created folder: example/scripts</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="do">## Created folder: example/scripts/extras</span></span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="do">##   Added .gitignore to: example/scripts/extras</span></span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="do">## Working directory set to: C:/Users/simrol/OneDrive - UKCEH/R_onedrive/R_2025/recorderFeedback/example</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co"># Pull / refresh input files</span></span>
+<span><span class="fu"><a href="reference/rf_get_recipients.html">rf_get_recipients</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/rf_get_data.html">rf_get_data</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#get recipients</span></span>
-<span><span class="fu"><a href="reference/rf_get_recipients.html">rf_get_recipients</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="do">## [1] "Recipient file has been updated"</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">recipients_file</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<table class="table">
-<thead><tr class="header">
-<th align="left">email</th>
-<th align="left">name</th>
-<th align="right">recipient_id</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left"><a href="mailto:alice@example.com" class="email">alice@example.com</a></td>
-<td align="left">Alice</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left"><a href="mailto:bob@example.com" class="email">bob@example.com</a></td>
-<td align="left">Bob</td>
-<td align="right">2</td>
-</tr>
-<tr class="odd">
-<td align="left"><a href="mailto:carol@example.com" class="email">carol@example.com</a></td>
-<td align="left">Carol</td>
-<td align="right">3</td>
-</tr>
-<tr class="even">
-<td align="left"><a href="mailto:dave@example.com" class="email">dave@example.com</a></td>
-<td align="left">Dave</td>
-<td align="right">4</td>
-</tr>
-<tr class="odd">
-<td align="left"><a href="mailto:eve@example.com" class="email">eve@example.com</a></td>
-<td align="left">Eve</td>
-<td align="right">5</td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#get data</span></span>
-<span><span class="fu"><a href="reference/rf_get_data.html">rf_get_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="do">## [1] "Data file has been updated"</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_file</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
-<colgroup>
-<col width="18%">
-<col width="12%">
-<col width="15%">
-<col width="27%">
-<col width="25%">
-</colgroup>
-<thead><tr class="header">
-<th align="right">recipient_id</th>
-<th align="right">latitude</th>
-<th align="right">longitude</th>
-<th align="left">species</th>
-<th align="left">species_vernacular</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="right">1</td>
-<td align="right">53.96196</td>
-<td align="right">0.1651712</td>
-<td align="left">Vulpes vulpes</td>
-<td align="left">Red Fox</td>
-</tr>
-<tr class="even">
-<td align="right">2</td>
-<td align="right">53.77311</td>
-<td align="right">-0.4897633</td>
-<td align="left">Meles meles</td>
-<td align="left">Badger</td>
-</tr>
-<tr class="odd">
-<td align="right">3</td>
-<td align="right">53.79761</td>
-<td align="right">0.6105198</td>
-<td align="left">Meles meles</td>
-<td align="left">Badger</td>
-</tr>
-<tr class="even">
-<td align="right">4</td>
-<td align="right">53.89003</td>
-<td align="right">0.2078202</td>
-<td align="left">Erinaceus europaeus</td>
-<td align="left">Hedgehog</td>
-</tr>
-<tr class="odd">
-<td align="right">5</td>
-<td align="right">53.73566</td>
-<td align="right">0.5859544</td>
-<td align="left">Vulpes vulpes</td>
-<td align="left">Red Fox</td>
-</tr>
-<tr class="even">
-<td align="right">1</td>
-<td align="right">53.07644</td>
-<td align="right">0.5836285</td>
-<td align="left">Vulpes vulpes</td>
-<td align="left">Red Fox</td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#verify the data is all good</span></span>
-<span><span class="fu"><a href="reference/rf_verify_data.html">rf_verify_data</a></span><span class="op">(</span><span class="cn">T</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="do">## Number of data records: 20</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="do">## Number of recipients: 5</span></span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="do">## Data and recipients verification complete: no blocking errors found.</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#render a single feedback item</span></span>
-<span><span class="fu"><a href="reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="do">## [1] "renders/singles/content_1_2025-08-20.html"</span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># run the pipeline</span></span>
-<span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"test_batch"</span></span>
-<span><span class="fu"><a href="reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="do">## + template_file dispatched</span></span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="do">## ✔ template_file completed [450ms, 1.20 kB]</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="do">## + html_template_file dispatched</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="do">## ✔ html_template_file completed [0ms, 2.28 kB]</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="do">## + recipients_target dispatched</span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="do">## ✔ recipients_target completed [0ms, 213 B]</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="do">## + raw_data_file dispatched</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="do">## ✔ raw_data_file completed [0ms, 1.39 kB]</span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="do">## + computation_file dispatched</span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="do">## ✔ computation_file completed [0ms, 1.17 kB]</span></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="do">## + computation_file_focal dispatched</span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="do">## ✔ computation_file_focal completed [0ms, 1.17 kB]</span></span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="do">## + raw_data dispatched</span></span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="do">## ✔ raw_data completed [0ms, 605 B]</span></span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="do">## + bg_computed_objects dispatched</span></span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="do">## ✔ bg_computed_objects completed [0ms, 78 B]</span></span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="do">## + recipient_objects_1 dispatched</span></span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="do">## ✔ recipient_objects_1 completed [0ms, 392 B]</span></span>
-<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="do">## + recipient_objects_2 dispatched</span></span>
-<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="do">## ✔ recipient_objects_2 completed [0ms, 424 B]</span></span>
-<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a><span class="do">## + recipient_objects_3 dispatched</span></span>
-<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="do">## ✔ recipient_objects_3 completed [20ms, 417 B]</span></span>
-<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="do">## + recipient_objects_4 dispatched</span></span>
-<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="do">## ✔ recipient_objects_4 completed [0ms, 413 B]</span></span>
-<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="do">## + recipient_objects_5 dispatched</span></span>
-<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="do">## ✔ recipient_objects_5 completed [0ms, 415 B]</span></span>
-<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="do">## + data_story_content_1 dispatched</span></span>
-<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="do">## ✔ data_story_content_1 completed [1.8s, 3.46 kB]</span></span>
-<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="do">## + data_story_content_2 dispatched</span></span>
-<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="do">## ✔ data_story_content_2 completed [1.2s, 3.60 kB]</span></span>
-<span id="cb16-31"><a href="#cb16-31" tabindex="-1"></a><span class="do">## + data_story_content_3 dispatched</span></span>
-<span id="cb16-32"><a href="#cb16-32" tabindex="-1"></a><span class="do">## ✔ data_story_content_3 completed [1.2s, 3.60 kB]</span></span>
-<span id="cb16-33"><a href="#cb16-33" tabindex="-1"></a><span class="do">## + data_story_content_4 dispatched</span></span>
-<span id="cb16-34"><a href="#cb16-34" tabindex="-1"></a><span class="do">## ✔ data_story_content_4 completed [1.2s, 3.60 kB]</span></span>
-<span id="cb16-35"><a href="#cb16-35" tabindex="-1"></a><span class="do">## + data_story_content_5 dispatched</span></span>
-<span id="cb16-36"><a href="#cb16-36" tabindex="-1"></a><span class="do">## ✔ data_story_content_5 completed [1.2s, 3.59 kB]</span></span>
-<span id="cb16-37"><a href="#cb16-37" tabindex="-1"></a><span class="do">## + meta_data_1 dispatched</span></span>
-<span id="cb16-38"><a href="#cb16-38" tabindex="-1"></a><span class="do">## ✔ meta_data_1 completed [0ms, 172 B]</span></span>
-<span id="cb16-39"><a href="#cb16-39" tabindex="-1"></a><span class="do">## + meta_data_2 dispatched</span></span>
-<span id="cb16-40"><a href="#cb16-40" tabindex="-1"></a><span class="do">## ✔ meta_data_2 completed [0ms, 175 B]</span></span>
-<span id="cb16-41"><a href="#cb16-41" tabindex="-1"></a><span class="do">## + meta_data_3 dispatched</span></span>
-<span id="cb16-42"><a href="#cb16-42" tabindex="-1"></a><span class="do">## ✔ meta_data_3 completed [0ms, 172 B]</span></span>
-<span id="cb16-43"><a href="#cb16-43" tabindex="-1"></a><span class="do">## + meta_data_4 dispatched</span></span>
-<span id="cb16-44"><a href="#cb16-44" tabindex="-1"></a><span class="do">## ✔ meta_data_4 completed [0ms, 174 B]</span></span>
-<span id="cb16-45"><a href="#cb16-45" tabindex="-1"></a><span class="do">## + meta_data_5 dispatched</span></span>
-<span id="cb16-46"><a href="#cb16-46" tabindex="-1"></a><span class="do">## ✔ meta_data_5 completed [0ms, 174 B]</span></span>
-<span id="cb16-47"><a href="#cb16-47" tabindex="-1"></a><span class="do">## + meta_table dispatched</span></span>
-<span id="cb16-48"><a href="#cb16-48" tabindex="-1"></a><span class="do">## ✔ meta_table completed [20ms, 653 B]</span></span>
-<span id="cb16-49"><a href="#cb16-49" tabindex="-1"></a><span class="do">## ✔ ended pipeline [9.2s, 24 completed, 0 skipped]</span></span>
-<span id="cb16-50"><a href="#cb16-50" tabindex="-1"></a><span class="do">## Warning messages:</span></span>
-<span id="cb16-51"><a href="#cb16-51" tabindex="-1"></a><span class="do">## 1: package 'targets' was built under R version 4.5.1 </span></span>
-<span id="cb16-52"><a href="#cb16-52" tabindex="-1"></a><span class="do">## 2: package 'tarchetypes' was built under R version 4.5.1 </span></span>
-<span id="cb16-53"><a href="#cb16-53" tabindex="-1"></a><span class="do">## 3: package 'assertr' was built under R version 4.5.1 </span></span>
-<span id="cb16-54"><a href="#cb16-54" tabindex="-1"></a><span class="do">## 4: package 'lubridate' was built under R version 4.5.1 </span></span>
-<span id="cb16-55"><a href="#cb16-55" tabindex="-1"></a><span class="do">## 5: 1 targets produced warnings. Run targets::tar_meta(fields = warnings, complete_only = TRUE) for the messages. </span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#view the meta table</span></span>
-<span><span class="va">meta_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="st">"renders"</span>,<span class="va">batch_id</span>,<span class="st">"/meta_table.csv"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">meta_table</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
-<colgroup>
-<col width="16%">
-<col width="16%">
-<col width="16%">
-<col width="16%">
-<col width="16%">
-<col width="16%">
-</colgroup>
-<thead><tr class="header">
-<th align="right">recipient_id</th>
-<th align="left">file</th>
-<th align="left">content_key</th>
-<th align="left">email</th>
-<th align="left">name</th>
-<th align="left">batch_id</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="right">1</td>
-<td align="left">renders/test_batch/content_1_2025-08-20.html</td>
-<td align="left">test_batchax197s7f4rqb2o1k</td>
-<td align="left"><a href="mailto:alice@example.com" class="email">alice@example.com</a></td>
-<td align="left">Alice</td>
-<td align="left">test_batch</td>
-</tr>
-<tr class="even">
-<td align="right">2</td>
-<td align="left">renders/test_batch/content_2_2025-08-20.html</td>
-<td align="left">test_batchj3rqrqww63pyq21h</td>
-<td align="left"><a href="mailto:bob@example.com" class="email">bob@example.com</a></td>
-<td align="left">Bob</td>
-<td align="left">test_batch</td>
-</tr>
-<tr class="odd">
-<td align="right">3</td>
-<td align="left">renders/test_batch/content_3_2025-08-20.html</td>
-<td align="left">test_batchq9zryyeo3ynmubf2</td>
-<td align="left"><a href="mailto:carol@example.com" class="email">carol@example.com</a></td>
-<td align="left">Carol</td>
-<td align="left">test_batch</td>
-</tr>
-<tr class="even">
-<td align="right">4</td>
-<td align="left">renders/test_batch/content_4_2025-08-20.html</td>
-<td align="left">test_batchw9u37ang7eij7jd9</td>
-<td align="left"><a href="mailto:dave@example.com" class="email">dave@example.com</a></td>
-<td align="left">Dave</td>
-<td align="left">test_batch</td>
-</tr>
-<tr class="odd">
-<td align="right">5</td>
-<td align="left">renders/test_batch/content_5_2025-08-20.html</td>
-<td align="left">test_batch8x65335n14ojgtxe</td>
-<td align="left"><a href="mailto:eve@example.com" class="email">eve@example.com</a></td>
-<td align="left">Eve</td>
-<td align="left">test_batch</td>
-</tr>
-</tbody>
-</table>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#verify the batch</span></span>
-<span><span class="fu"><a href="reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="do">## Batch verification complete: no blocking errors found.</span></span></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co">#view content</span></span>
-<span><span class="co">#rf_view_content(batch_id = batch_id,recipient_id = 3)</span></span>
+<span><span class="co"># Validate data and required project files</span></span>
+<span><span class="fu"><a href="reference/rf_verify_data.html">rf_verify_data</a></span><span class="op">(</span>verbose <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/rf_preflight.html">rf_preflight</a></span><span class="op">(</span>stage <span class="op">=</span> <span class="st">"render"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co">#send the emails</span></span>
-<span><span class="co">#rf_dispatch_smtp(batch_id)</span></span></code></pre></div>
+<span><span class="co"># Render one recipient while iterating on template content</span></span>
+<span><span class="fu"><a href="reference/rf_render_single.html">rf_render_single</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Render a full batch</span></span>
+<span><span class="va">batch_id</span> <span class="op">&lt;-</span> <span class="st">"2026_03_example"</span></span>
+<span><span class="fu"><a href="reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Check what rendered and what failed/skipped</span></span>
+<span><span class="fu"><a href="reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span>
+<span><span class="co"># rf_view_content(batch_id, recipient_id = 1)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="id_4-dispatch-safely">4. Dispatch safely<a class="anchor" aria-label="anchor" href="#id_4-dispatch-safely"></a>
+</h3>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Validate without sending</span></span>
+<span><span class="fu"><a href="reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># In test_mode = TRUE, sends only to mail_test_recipient</span></span>
+<span><span class="fu"><a href="reference/rf_dispatch_smtp.html">rf_dispatch_smtp</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Required confirmation when test_mode = FALSE</span></span>
+<span><span class="co"># rf_dispatch_smtp(batch_id, confirm_live_send = TRUE)</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="pipeline-diagram">Pipeline diagram<a class="anchor" aria-label="anchor" href="#pipeline-diagram"></a>
+</h2>
+<pre class="mermaid"><code>graph TD
+    A[Data source] --&gt; |"rf_get_recipients()&lt;br&gt;config$recipients_script" | B["Recipients CSV&lt;br&gt;config$recipients_file"]
+    C[Data source] --&gt; |"rf_get_data()&lt;br&gt;config$data_script" | D["Data CSV&lt;br&gt;config$data_file"]
+    H["Computation scripts&lt;br&gt;config$computation_script_focal&lt;br&gt;config$computation_script_bg"] --&gt; E
+    F["Templates&lt;br&gt;config$content_template_file&lt;br&gt;config$html_template_file"] --&gt; E
+    B --&gt; E("targets pipeline&lt;br&gt;_targets.R")
+    D --&gt; E
+    E --&gt; |"rf_render_all()"| G["Rendered HTML + meta table&lt;br&gt;renders/&lt;batch_id&gt;/"]
+    G --&gt; |"rf_dispatch_smtp()"| J[Recipient inboxes]</code></pre>
+</div>
+<div class="section level2">
+<h2 id="key-terms">Key terms<a class="anchor" aria-label="anchor" href="#key-terms"></a>
+</h2>
+<ul>
+<li>Recipient: a person or account receiving a feedback output.</li>
+<li>Focal data: records associated with the specific recipient.</li>
+<li>Background data: context records not tied to one recipient.</li>
+<li>Template: the <code>Rmd</code> file that turns data into recipient-specific content.</li>
+<li>Batch: one run of <code><a href="reference/rf_render_all.html">rf_render_all()</a></code>, identified by <code>batch_id</code>.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="dispatch-safety-and-observability">Dispatch safety and observability<a class="anchor" aria-label="anchor" href="#dispatch-safety-and-observability"></a>
+</h2>
+<p><code><a href="reference/rf_dispatch_smtp.html">rf_dispatch_smtp()</a></code> now writes dispatch artifacts per batch:</p>
+<ul>
+<li>
+<code>renders/&lt;batch_id&gt;/dispatch_log.csv</code>: one row per send attempt.</li>
+<li>
+<code>renders/&lt;batch_id&gt;/dispatch_summary.csv</code>: run-level summary metrics.</li>
+</ul>
+<p>Recommended send sequence:</p>
+<ol style="list-style-type: decimal">
+<li>Keep <code>test_mode: TRUE</code> in <code>config.yml</code>.</li>
+<li>Run <code>rf_dispatch_smtp(batch_id, dry_run = TRUE)</code> to validate rows and files.</li>
+<li>Run <code>rf_dispatch_smtp(batch_id)</code> for test-recipient sends.</li>
+<li>Switch to <code>test_mode: FALSE</code> only when ready, and use <code>rf_dispatch_smtp(batch_id, confirm_live_send = TRUE)</code>.</li>
+</ol>
+<p>If a run is interrupted, rerun with <code>resume = TRUE</code> to skip recipients already marked as <code>Success</code> in <code>dispatch_log.csv</code>.</p>
+<p>Campaign controls:</p>
+<ul>
+<li>
+<code>mail_subject_template</code> supports recipient/campaign variables, e.g. <code>"{{campaign_name}} update for {{name}}"</code>.</li>
+<li>
+<code>mail_body_prefix_template</code> / <code>mail_body_suffix_template</code> inject optional HTML around each rendered email using the same template variables.</li>
+<li>
+<code>mail_attachments_col</code> / <code>mail_inline_images_col</code> define optional <code>meta_table.csv</code> columns with per-recipient file paths for attachments and inline media.</li>
+<li>
+<code>preview_only</code> with <code>preview_n</code> or <code>preview_recipient_ids</code> writes sampled previews to <code>renders/&lt;batch_id&gt;/dispatch_preview/</code>.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="selective-rendering">Selective Rendering<a class="anchor" aria-label="anchor" href="#selective-rendering"></a>
+</h2>
+<p>You can render content for only a subset of recipients by defining <code>recipient_select()</code> in the script referenced by <code>config$recipient_select_script</code>. The function receives the recipients table, the full data table, and the active config, and should return either a logical vector, a vector of recipient IDs to keep, or a data frame with <code>recipient_id</code>, <code>selected</code>, and optional <code>skip_reason</code> columns.</p>
+<p>Recipients excluded by this function are written to <code>meta_table.csv</code> with <code>render_status = "skipped"</code>, so they remain visible in the batch audit trail but are not rendered or dispatched.</p>
 </div>
 <div class="section level2">
 <h2 id="handling-errors">Handling errors<a class="anchor" aria-label="anchor" href="#handling-errors"></a>
 </h2>
-<p>If rendering a template fails the pipeline will continue, but you won’t have a <code>.html</code> file in the designated <code>renders/[batch_id]</code> folder. Using <code><a href="reference/rf_verify_batch.html">rf_verify_batch()</a></code> will show you for which recipients the rendering failed. Using <code>targets::tar_meta(fields = "error")</code> will also tell you which targets failed and the corresponding error messages. Use <code>render_single(recipient_id)</code> to render an individual feedback item and view the detailed error message that is shown.</p>
+<p>If rendering a template fails the pipeline will continue, but you won’t have a <code>.html</code> file in the designated <code>renders/[batch_id]</code> folder. Using <code><a href="reference/rf_verify_batch.html">rf_verify_batch()</a></code> will show you for which recipients the rendering failed. Using <code>targets::tar_meta(fields = "error")</code> will also tell you which targets failed and the corresponding error messages. Use <code>rf_render_single(recipient_id)</code> to render an individual feedback item and view the detailed error message that is shown.</p>
+<p>Data QA in <code><a href="reference/rf_verify_data.html">rf_verify_data()</a></code> now includes:</p>
+<ul>
+<li>duplicate <code>recipient_id</code> detection</li>
+<li>missing/invalid email checks</li>
+<li>optional recorder schema checks for columns like <code>date</code>, <code>species</code>, and <code>site</code>
+</li>
+</ul>
+<p>Use <code>rf_preflight(stage = "dispatch", batch_id = "my_batch")</code> to fail fast before dispatch.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">recorderFeedback</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.9.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,6 +97,9 @@ focal (recipient-specific) data.</li>
 <code>computation_script_bg</code>: Script for background
 computations.</li>
 <li>
+<code>recipient_select_script</code>: Optional script for selecting
+which recipients to render in a batch.</li>
+<li>
 <code>content_template_file</code>: RMarkdown template for rendering
 feedback.</li>
 <li>
@@ -110,6 +113,7 @@ output.</li>
 <span><span class="va">config</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"computation_script_focal"</span>,</span>
 <span>  <span class="st">"computation_script_bg"</span>,</span>
+<span>  <span class="st">"recipient_select_script"</span>,</span>
 <span>  <span class="st">"content_template_file"</span>,</span>
 <span>  <span class="st">"html_template_file"</span></span>
 <span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
@@ -144,6 +148,89 @@ running a full batch.</p>
 <span><span class="fu"><a href="../reference/rf_render_all.html">rf_render_all</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
+<h3 id="rendering-only-selected-recipients">Rendering Only Selected Recipients<a class="anchor" aria-label="anchor" href="#rendering-only-selected-recipients"></a>
+</h3>
+<p>Batch rendering can be filtered with the script referenced by
+<code>recipient_select_script</code>. That script should define
+<code>recipient_select(recipients, data, config)</code> and return one
+of:</p>
+<ul>
+<li>
+<code>NULL</code> to render everyone.</li>
+<li>A logical vector with one value per row in
+<code>recipients</code>.</li>
+<li>A vector of <code>recipient_id</code> values to render.</li>
+<li>A data frame containing <code>recipient_id</code>,
+<code>selected</code>, and optional <code>skip_reason</code>.</li>
+</ul>
+<p>For example, to render only recipients that have at least five
+records and record why others were skipped:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">recipient_select</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">recipients</span>, <span class="va">data</span>, <span class="va">config</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">recipient_id</span><span class="op">)</span>, by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>recipient_id <span class="op">=</span> <span class="va">data</span><span class="op">$</span><span class="va">recipient_id</span><span class="op">)</span>, FUN <span class="op">=</span> <span class="va">length</span><span class="op">)</span></span>
+<span>  <span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">recipients</span><span class="op">[</span><span class="st">"recipient_id"</span><span class="op">]</span>, <span class="va">counts</span>, by <span class="op">=</span> <span class="st">"recipient_id"</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="va">counts</span><span class="op">$</span><span class="va">n</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">counts</span><span class="op">$</span><span class="va">n</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>    recipient_id <span class="op">=</span> <span class="va">counts</span><span class="op">$</span><span class="va">recipient_id</span>,</span>
+<span>    selected <span class="op">=</span> <span class="va">counts</span><span class="op">$</span><span class="va">n</span> <span class="op">&gt;=</span> <span class="fl">5</span>,</span>
+<span>    skip_reason <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">counts</span><span class="op">$</span><span class="va">n</span> <span class="op">&gt;=</span> <span class="fl">5</span>, <span class="cn">NA_character_</span>, <span class="st">"Fewer than 5 records"</span><span class="op">)</span>,</span>
+<span>    stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Skipped recipients remain in
+<code>renders/&lt;batch_id&gt;/meta_table.csv</code> with
+<code>render_status = "skipped"</code>, but no HTML file is produced for
+them.</p>
+</div>
+<div class="section level3">
+<h3 id="using-location-based-feedback-instead-of-individual-based-feedback">Using Location-Based Feedback Instead of Individual-Based
+Feedback<a class="anchor" aria-label="anchor" href="#using-location-based-feedback-instead-of-individual-based-feedback"></a>
+</h3>
+<p>You can use <code>recorderFeedback</code> for place-based reporting
+(for example, “all species recorded in location X”) rather than
+person-based reporting.</p>
+<p>The main idea is:</p>
+<ol style="list-style-type: decimal">
+<li>Keep one row per email recipient in
+<code>recipients_file</code>.</li>
+<li>Add location fields to recipients (for example
+<code>location_id</code>, <code>location_name</code>).</li>
+<li>Ensure your records data includes a matching location field.</li>
+<li>Change <code>scripts/focal_filter.R</code> so focal data is filtered
+by location, not by recorder identity.</li>
+</ol>
+<p>Required recipient columns are still <code>recipient_id</code>,
+<code>name</code>, and <code>email</code>, but you can add any extra
+columns needed for filtering and template content.</p>
+<p>Example <code>focal_filter()</code> for location-based emails:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">focal_filter</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">all_data</span>, <span class="va">recipient_id</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<span>  <span class="va">recipients</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">recipients_file</span>, stringsAsFactors <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">rec</span> <span class="op">&lt;-</span> <span class="va">recipients</span><span class="op">[</span><span class="va">recipients</span><span class="op">$</span><span class="va">recipient_id</span> <span class="op">==</span> <span class="va">recipient_id</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">rec</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop</a></span><span class="op">(</span><span class="st">"No recipient row for recipient_id = "</span>, <span class="va">recipient_id</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span></span>
+<span>  <span class="co"># Each recipient row maps to a location of interest.</span></span>
+<span>  <span class="va">loc</span> <span class="op">&lt;-</span> <span class="va">rec</span><span class="op">$</span><span class="va">location_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span></span>
+<span>  <span class="co"># Focal data now means all records in that location.</span></span>
+<span>  <span class="va">focal_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">all_data</span>, <span class="va">location_id</span> <span class="op">==</span> <span class="va">loc</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">focal_data</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>Once this is in place, <code><a href="../reference/rf_render_single.html">rf_render_single()</a></code> and
+<code><a href="../reference/rf_render_all.html">rf_render_all()</a></code> work as normal, but each email can now
+summarise all records from the recipient’s location.</p>
+<p>If your source data has coordinates instead of a
+<code>location_id</code>, you can apply a spatial filter in
+<code>focal_filter()</code> using polygons or bounding boxes from the
+recipient row.</p>
+</div>
+<div class="section level3">
 <h3 id="customising-templates">Customising Templates<a class="anchor" aria-label="anchor" href="#customising-templates"></a>
 </h3>
 <ul>
@@ -161,9 +248,9 @@ and layout wrapper.</li>
 <h3 id="viewing-and-verifying-output">Viewing and Verifying Output<a class="anchor" aria-label="anchor" href="#viewing-and-verifying-output"></a>
 </h3>
 <p>After generation, you can view and verify the content:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_view_content.html">rf_view_content</a></span><span class="op">(</span>batch_id <span class="op">=</span> <span class="va">batch_id</span>, recipient_id <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_verify_batch.html">rf_verify_batch</a></span><span class="op">(</span><span class="va">batch_id</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
