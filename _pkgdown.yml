@@ -6,6 +6,7 @@ reference:
 - title: Set up
 - contents:
   - rf_init
+  - rf_preflight
 - title: Getting Data
 - contents:
   - rf_get_recipients
