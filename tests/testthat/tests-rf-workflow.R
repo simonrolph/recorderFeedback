@@ -37,9 +37,11 @@ test_that("Project initialisation works", {
   withr::with_dir(tmp, {
     expect_true(dir.exists(file.path("data")))
     expect_true(dir.exists(file.path("renders")))
+    expect_true(dir.exists(file.path(".github")))
     expect_true(file.exists(file.path("config.yml")))
     expect_true(file.exists(file.path("README.md")))
     expect_true(file.exists(file.path(".gitignore")))
+    expect_true(file.exists(file.path(".github", "AGENTS.md")))
     expect_true(dir.exists(file.path("templates")))
   })
 })

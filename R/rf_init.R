@@ -29,6 +29,7 @@ rf_init <- function(path = ".") {
   make_dir(file.path(path, "renders"))
   make_dir(file.path(path, "scripts"))
   make_dir(file.path(path, "scripts", "extras"), gitignore = TRUE)
+  make_dir(file.path(path, ".github"))
 
 
   # --- Copy template files ---
@@ -70,6 +71,8 @@ rf_init <- function(path = ".") {
             file.path(path, "README.md"), overwrite = FALSE)
   file.copy(file.path(template_dir, "rf_gitignore"),
             file.path(path, ".gitignore"), overwrite = FALSE)
+  file.copy(file.path(template_dir, "rf_AGENTS.md"),
+            file.path(path, ".github", "AGENTS.md"), overwrite = FALSE)
 
   if(path != "."){
     setwd(path)
