@@ -17,7 +17,6 @@ knitr::opts_chunk$set(
 
 ```{r setup2}
 library(recorderFeedback)
-library(dplyr)
 ```
 
 # Overview
@@ -97,13 +96,22 @@ get_inat_observations <- function(user_id) {
   data <- content(response, as = "text", encoding = "UTF-8")
   obs <- fromJSON(data, flatten = TRUE)
   
-  output <- obs$results %>%
-    select(record_id = id,
-           recipient_id = user.id,
-           date = observed_on,
-           common_name = taxon.preferred_common_name,
-           scientific_name = taxon.name,
-           species_group = taxon.iconic_taxon_name)
+  output <- obs$results[, c(
+    "id",
+    "user.id",
+    "observed_on",
+    "taxon.preferred_common_name",
+    "taxon.name",
+    "taxon.iconic_taxon_name"
+  )]
+  names(output) <- c(
+    "record_id",
+    "recipient_id",
+    "date",
+    "common_name",
+    "scientific_name",
+    "species_group"
+  )
   
   return(output)
 }
@@ -111,8 +119,8 @@ get_inat_observations <- function(user_id) {
 recipients <- read.csv(config$recipients_file)
 observations <- data.frame()
 for (i in 1:nrow(recipients)) {
-  observations <- bind_rows(observations,
-                            get_inat_observations(recipients$recipient_id[i]))
+  observations <- rbind(observations,
+                        get_inat_observations(recipients$recipient_id[i]))
 }
 
 write.csv(observations, config$data_file, row.names = FALSE)
@@ -163,7 +171,6 @@ lines <- c(
   "```{r setup, include=FALSE}",
   "knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE,",
   "                      fig.align = 'center', error = FALSE, results = 'asis')",
-  "library(dplyr)",
   "```",
   "",
   "# Hello `r params$recipient_name`!",
@@ -171,13 +178,9 @@ lines <- c(
   "You have recorded `r length(unique(params$focal_data$scientific_name))` species recently!",
   "",
   "```{r table}",
-  "knitr::kable(",
-  "  params$focal_data %>%",
-  "    select(\"Date\" = date,",
-  "           \"Group\" = species_group,",
-  "           \"Species\" = scientific_name,",
-  "           \"Common name\" = common_name)",
-  ")",
+  "table_data <- params$focal_data[, c('date', 'species_group', 'scientific_name', 'common_name')]",
+  "names(table_data) <- c('Date', 'Group', 'Species', 'Common name')",
+  "knitr::kable(table_data)",
   "```",
   "",
   "Best wishes,  ",

@@ -1,63 +1,122 @@
 library(testthat)
 library(recorderFeedback)
 
-tmp <- tempdir()
+make_test_project <- function(load_data = FALSE, label = "workflow") {
+  keep_outputs <- tolower(Sys.getenv("RF_KEEP_TEST_OUTPUTS", "false")) %in% c("true", "1", "yes")
+
+  if (keep_outputs) {
+    root <- file.path(normalizePath(".", winslash = "/", mustWork = TRUE), "test-output")
+    dir.create(root, recursive = TRUE, showWarnings = FALSE)
+
+    stamp <- format(Sys.time(), "%Y%m%d-%H%M%S")
+    unique_id <- sprintf("%06d", sample.int(999999, 1))
+    path <- file.path(root, paste0(label, "-", stamp, "-", unique_id))
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+    message("Test project kept at: ", path)
+  } else {
+    path <- tempfile("rf_workflow_")
+    dir.create(path, recursive = TRUE)
+  }
+
+  withr::with_dir(path, {
+    rf_init(path = path)
+
+    if (load_data) {
+      rf_get_recipients()
+      rf_get_data()
+    }
+  })
+
+  path
+}
 
 # test project initialisation
 test_that("Project initialisation works", {
-  expect_message(rf_init(path = tmp))
-  expect_true(dir.exists(file.path("data")))
-  expect_true(dir.exists(file.path("renders")))
-  expect_true(file.exists(file.path("config.yml")))
-  expect_true(file.exists(file.path("README.md")))
-  expect_true(dir.exists(file.path("templates")))
+  tmp <- make_test_project(load_data = FALSE, label = "project-init")
+
+  withr::with_dir(tmp, {
+    expect_true(dir.exists(file.path("data")))
+    expect_true(dir.exists(file.path("renders")))
+    expect_true(file.exists(file.path("config.yml")))
+    expect_true(file.exists(file.path("README.md")))
+    expect_true(dir.exists(file.path("templates")))
+  })
 })
 
 #test that the configuration files exist
 test_that("Configuration files exist", {
-  config_path <- file.path("config.yml")
-  expect_true(file.exists(config_path))
-  config <<- config::get()
-  expect_true(!is.null(config))
+  tmp <- make_test_project(load_data = FALSE, label = "config-files")
 
-  expect_true(file.exists(file.path(getwd(),config$recipients_script)))
-  expect_true(file.exists(file.path(getwd(),config$data_script)))
+  withr::with_dir(tmp, {
+    config_path <- file.path("config.yml")
+    expect_true(file.exists(config_path))
+    config <- config::get()
+    expect_true(!is.null(config))
 
-  expect_true(file.exists(file.path(getwd(),config$focal_filter_script)))
-  expect_true(file.exists(file.path(getwd(),config$computation_script_bg)))
-  expect_true(file.exists(file.path(getwd(),config$computation_script_focal)))
-  expect_true(file.exists(file.path(getwd(),config$content_template_file)))
-  expect_true(file.exists(file.path(getwd(),config$html_template_file)))
+    expect_true(file.exists(file.path(getwd(),config$recipients_script)))
+    expect_true(file.exists(file.path(getwd(),config$data_script)))
+
+    expect_true(file.exists(file.path(getwd(),config$focal_filter_script)))
+    expect_true(file.exists(file.path(getwd(),config$computation_script_bg)))
+    expect_true(file.exists(file.path(getwd(),config$computation_script_focal)))
+    expect_true(file.exists(file.path(getwd(),config$content_template_file)))
+    expect_true(file.exists(file.path(getwd(),config$html_template_file)))
+  })
 })
 
 #data and recipient files
 test_that("Recipients and data load correctly", {
-  expect_message(rf_get_recipients())
-  expect_true(file.exists(file.path(getwd(),config$recipients_file)))
-  expect_message(rf_get_data())
-  expect_true(file.exists(file.path(getwd(),config$data_file)))
+  tmp <- make_test_project(load_data = FALSE, label = "data-load")
+
+  withr::with_dir(tmp, {
+    expect_message(rf_get_recipients())
+    config <- config::get()
+    expect_true(file.exists(file.path(getwd(),config$recipients_file)))
+    expect_message(rf_get_data())
+    expect_true(file.exists(file.path(getwd(),config$data_file)))
+  })
 })
 
 test_that("Data verification runs", {
-  expect_message(rf_verify_data(TRUE))
+  tmp <- make_test_project(load_data = TRUE, label = "data-verify")
+
+  withr::with_dir(tmp, {
+    expect_message(rf_verify_data(TRUE))
+  })
 })
 
 
 test_that("Batch pipeline runs", {
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "batch-pipeline")
   batch_id <- "test_batch"
-  rf_render_all(batch_id)
 
-  expect_equal(nrow(targets::tar_meta(fields="error",complete_only = TRUE)),0)
+  withr::with_dir(tmp, {
+    rf_render_all(batch_id)
 
-  meta_path <- file.path("renders", batch_id, "meta_table.csv")
-  expect_true(file.exists(meta_path))
+    expect_equal(nrow(targets::tar_meta(fields="error",complete_only = TRUE)),0)
+
+    meta_path <- file.path("renders", batch_id, "meta_table.csv")
+    expect_true(file.exists(meta_path))
+  })
 })
 
 test_that("Batch verification runs", {
-  expect_message(rf_verify_batch(batch_id))
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "batch-verify")
+  batch_id <- "test_batch"
+
+  withr::with_dir(tmp, {
+    rf_render_all(batch_id)
+    expect_message(rf_verify_batch(batch_id))
+  })
 })
 
-#for some reason this deletes the temporay directory so I run this test last
 test_that("Single feedback item renders", {
-  expect_silent(rf_render_single(recipient_id = 1))
+  skip_if_not(rmarkdown::pandoc_available(), "pandoc is required for rendering tests")
+  tmp <- make_test_project(load_data = TRUE, label = "single-render")
+
+  withr::with_dir(tmp, {
+    expect_silent(rf_render_single(recipient_id = 1))
+  })
 })

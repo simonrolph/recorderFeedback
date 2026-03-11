@@ -14,7 +14,6 @@ License: OGL
 Encoding: UTF-8
 LazyData: true
 Imports:
-    dplyr,
     targets,
     tarchetypes,
     rmarkdown,

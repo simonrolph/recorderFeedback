@@ -33,7 +33,7 @@ rf_render_single <- function(recipient_id,view = F){
        bg_computed_objects = bg_computed_objects,
        content_key = content_key,
        config = config,
-       extra_params = dplyr::select(recipient,-name,-email))
+      extra_params = recipient[, setdiff(names(recipient), c("name", "email")), drop = FALSE])
 
   rendered_file <- rf_render_content(
     template_file = config$content_template_file,

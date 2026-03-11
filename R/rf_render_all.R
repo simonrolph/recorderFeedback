@@ -7,9 +7,15 @@
 #' @export
 rf_render_all <- function(batch_id){
 
+  start_wd <- getwd()
+  on.exit({
+    Sys.unsetenv("BATCH_ID")
+    setwd(start_wd)
+  }, add = TRUE)
+
   Sys.setenv(BATCH_ID = batch_id) # Set an environment variable in R for the batch code
-  targets::tar_make() # run the pipeline
-  Sys.unsetenv("BATCH_ID") #and unset the variable
+  # Use current session to ensure the active package code is used consistently.
+  targets::tar_make(callr_function = NULL) # run the pipeline
 
   errors <- targets::tar_meta(fields = error, complete_only = TRUE)
 

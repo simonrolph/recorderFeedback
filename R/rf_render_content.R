@@ -46,8 +46,10 @@ rf_render_content <- function(template_file,recipient_params,recipient_id,batch_
     )
   }
 
-  #set a temp directory for intermediate files in rendering
-  temporary_directory <- tempdir() #per session temp directory
+  # Use a dedicated temp subdirectory so cleanup does not interfere with
+  # other package or targets temporary files in the same R session.
+  temporary_directory <- tempfile(pattern = "rf_render_", tmpdir = tempdir())
+  dir.create(temporary_directory, recursive = TRUE, showWarnings = FALSE)
 
   #render the content
   rmarkdown::render(template_file,
@@ -61,8 +63,8 @@ rf_render_content <- function(template_file,recipient_params,recipient_id,batch_
          envir = new.env()
   )
 
-  #delete the temporary director
-  unlink(temporary_directory, recursive = TRUE)
+  # Delete only the render-specific temp directory.
+  unlink(temporary_directory, recursive = TRUE, force = TRUE)
 
   #return the file name as in targets we're using format="file"
   paste0("renders/",batch_id,"/",out_file)

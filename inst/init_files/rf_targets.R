@@ -15,7 +15,7 @@ if (batch_id == ""){
 #   controller = crew_controller_local(workers = 4),
 # )
 
-tar_option_set(packages = c("dplyr", "ggplot2","rmarkdown","tidyr","lubridate"))
+tar_option_set(packages = c("ggplot2","rmarkdown","tidyr","lubridate"))
 
 
 
@@ -65,7 +65,11 @@ mapping <- tar_map(
                                   bg_computed_objects = bg_computed_objects,
                                   content_key = recipient_objects$content_key,
                                   config = config,
-                                  extra_params = recipients_target %>% filter(recipient_id == recipient_id_) %>% select(-name,-email)),
+                                  extra_params = recipients_target[
+                                    recipients_target$recipient_id == recipient_id_,
+                                    setdiff(names(recipients_target), c("name", "email")),
+                                    drop = FALSE
+                                  ]),
                recipient_id = recipient_id_,
                batch_id = batch_id,
                email_format = email_format,

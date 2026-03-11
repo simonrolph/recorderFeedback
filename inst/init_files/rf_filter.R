@@ -27,7 +27,7 @@
 #' 4. Filters `all_data` to return only the rows matching the selected
 #'    recipient.
 #'
-#' Alternative filtering criteria can be enabled by modifying the `dplyr::filter`
+#' Alternative filtering criteria can be enabled by modifying the base R subset
 #' call (e.g., by `activity_id`).
 #'
 #'
@@ -40,10 +40,10 @@ focal_filter <- function(all_data, recipient_id) {
   recipient <- recipients[recipients$recipient_id==r_id,]
 
   # default: filter by recipient_id
-  focal_data <- dplyr::filter(all_data, recipient_id == recipient$recipient_id)
+  focal_data <- subset(all_data, recipient_id == recipient$recipient_id[1])
 
   # alternative: filter by another column such as activity_id
-  # focal_data <- dplyr::filter(all_data, activity_id == recipient$activity_id)
+  # focal_data <- subset(all_data, activity_id == recipient$activity_id[1])
   # or even you could do some spatial filtering at this stage
 
   focal_data
