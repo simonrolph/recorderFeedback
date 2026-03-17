@@ -6,6 +6,7 @@
 #' @param recipient_params List. Parameters for the recipient
 #' @param recipient_id Character. Identifier for the batch.
 #' @param batch_id Character. Identifier for the batch.
+#' @param email_format Function used as output format factory for `rmarkdown::render()`.
 #' @param template_html Character. Template file for template
 #' @return Path to rendered file.
 #' @export

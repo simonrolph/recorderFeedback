@@ -22,6 +22,8 @@ rf_render_content(
 
 \item{batch_id}{Character. Identifier for the batch.}
 
+\item{email_format}{Function used as output format factory for \code{rmarkdown::render()}.}
+
 \item{template_html}{Character. Template file for template}
 }
 \value{

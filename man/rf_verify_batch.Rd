@@ -7,6 +7,8 @@
 rf_verify_batch(batch_id, verbose = FALSE)
 }
 \arguments{
+\item{batch_id}{Character. Identifier for the batch to verify.}
+
 \item{verbose}{Logical, if TRUE prints summary info.}
 }
 \value{

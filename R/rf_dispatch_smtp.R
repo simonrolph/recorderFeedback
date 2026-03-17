@@ -575,7 +575,8 @@ rf_dispatch_smtp <- function(
       }
 
       send_call <- function() {
-        email_obj <- blastula:::cid_images(temp_file)
+        cid_images_fn <- getFromNamespace("cid_images", "blastula")
+        email_obj <- cid_images_fn(temp_file)
         blastula::smtp_send(
           email = email_obj,
           from = sender,

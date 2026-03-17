@@ -9,7 +9,11 @@
 rf_do_computations <- function(computation_script,records_data){
 
   source(computation_script)
-  computed_objects <- compute_objects(records_data)
+  if (!exists("compute_objects", mode = "function", inherits = TRUE)) {
+    stop("Function 'compute_objects' not found after sourcing computation script: ", computation_script)
+  }
+  compute_objects_fn <- get("compute_objects", mode = "function", inherits = TRUE)
+  computed_objects <- compute_objects_fn(records_data)
 
   computed_objects
 }

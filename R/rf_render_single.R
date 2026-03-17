@@ -11,17 +11,27 @@ rf_render_single <- function(recipient_id,view = F){
   config <- config::get()
   batch_id <- "singles"
   dir.create("renders/singles",showWarnings = F)
-  source("templates/email_format.R") #email_format()
+  source("templates/email_format.R")
   source("scripts/focal_filter.R")
+
+  if (!exists("email_format", mode = "function", inherits = TRUE)) {
+    stop("Function 'email_format' not found after sourcing templates/email_format.R")
+  }
+  email_format_fn <- get("email_format", mode = "function", inherits = TRUE)
+
+  if (!exists("focal_filter", mode = "function", inherits = TRUE)) {
+    stop("Function 'focal_filter' not found after sourcing scripts/focal_filter.R")
+  }
+  focal_filter_fn <- get("focal_filter", mode = "function", inherits = TRUE)
 
   recipients <- read.csv(config$recipients_file)
   recipient <- recipients[recipients$recipient_id==recipient_id,]
 
   bg_data <- read.csv(config$data_file)
-  bg_computed_objects = rf_do_computations(computation = config$computation_script_bg,bg_data)
+  bg_computed_objects = rf_do_computations(computation_script = config$computation_script_bg, bg_data)
 
-  focal_data = focal_filter(bg_data,recipient_id)
-  focal_computed_objects = rf_do_computations(computation = config$computation_script_focal,focal_data)
+  focal_data = focal_filter_fn(bg_data,recipient_id)
+  focal_computed_objects = rf_do_computations(computation_script = config$computation_script_focal, focal_data)
   content_key = paste0(batch_id,paste0(sample(c(1:9,letters),16,replace = T),collapse=""))
 
 
@@ -40,7 +50,7 @@ rf_render_single <- function(recipient_id,view = F){
     params,
     recipient_id = recipient_id,
     batch_id = batch_id,
-    email_format = email_format,
+    email_format = email_format_fn,
     template_html = file.path(getwd(),config$html_template_file)
   )
 

@@ -2,6 +2,7 @@
 #'
 #' Checks that the rendered items match the recipient data and meta table.
 #'
+#' @param batch_id Character. Identifier for the batch to verify.
 #' @param verbose Logical, if TRUE prints summary info.
 #' @return Invisible TRUE if all checks pass, otherwise stops or warns.
 #' @export
