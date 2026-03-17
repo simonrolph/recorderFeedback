@@ -33,10 +33,10 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/1_getting_data.html">Getting Data</a></li>
-    <li><a class="dropdown-item" href="../articles/2_generating_content.html">Generating Content</a></li>
-    <li><a class="dropdown-item" href="../articles/3_distributing_content.html">Distributing Content</a></li>
+<li><a class="dropdown-item" href="../articles/distributing_content.html">Distributing Content</a></li>
     <li><a class="dropdown-item" href="../articles/example_1_inaturalist_summary.html">Example: iNaturalist Summary</a></li>
+    <li><a class="dropdown-item" href="../articles/generating_content.html">Generating Content</a></li>
+    <li><a class="dropdown-item" href="../articles/getting_data.html">Getting Data</a></li>
   </ul>
 </li>
       </ul>
@@ -94,7 +94,7 @@ recipients, fetch observations, render content, then distribute.</p>
 <p>Initialise a project directory and read config:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rf_init.html">rf_init</a></span><span class="op">(</span><span class="st">"inaturalist_example"</span><span class="op">)</span></span>
-<span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/config/reference/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Run subsequent commands from that project directory so relative paths
 in <code>config.yml</code> are valid.</p>
 </div>
@@ -108,7 +108,7 @@ in <code>config.yml</code> are valid.</p>
 generated. For this example, we manually define them in a script.</p>
 <p><strong>File: <code>scripts/get_recipients.R</code></strong></p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu">get</span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">config</span><span class="fu">::</span><span class="fu"><a href="https://rstudio.github.io/config/reference/get.html" class="external-link">get</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  email <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"simon@example.com"</span><span class="op">)</span>,</span>
 <span>  name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Simon"</span><span class="op">)</span>,</span>

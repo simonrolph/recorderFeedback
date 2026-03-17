@@ -2,11 +2,11 @@ pandoc: 3.1.11
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  1_getting_data: 1_getting_data.html
-  2_generating_content: 2_generating_content.html
-  3_distributing_content: 3_distributing_content.html
+  distributing_content: distributing_content.html
   example_1_inaturalist_summary: example_1_inaturalist_summary.html
-last_built: 2026-03-11T15:05Z
+  generating_content: generating_content.html
+  getting_data: getting_data.html
+last_built: 2026-03-17T16:45Z
 urls:
   reference: https://simonrolph.github.io/recorderFeedback/reference
   article: https://simonrolph.github.io/recorderFeedback/articles

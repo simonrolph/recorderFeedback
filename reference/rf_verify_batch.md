@@ -10,6 +10,10 @@ rf_verify_batch(batch_id, verbose = FALSE)
 
 ## Arguments
 
+- batch_id:
+
+  Character. Identifier for the batch to verify.
+
 - verbose:
 
   Logical, if TRUE prints summary info.

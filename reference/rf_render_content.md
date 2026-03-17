@@ -33,6 +33,11 @@ rf_render_content(
 
   Character. Identifier for the batch.
 
+- email_format:
+
+  Function used as output format factory for
+  [`rmarkdown::render()`](https://pkgs.rstudio.com/rmarkdown/reference/render.html).
+
 - template_html:
 
   Character. Template file for template

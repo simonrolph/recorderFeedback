@@ -35,10 +35,10 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/1_getting_data.html">Getting Data</a></li>
-    <li><a class="dropdown-item" href="articles/2_generating_content.html">Generating Content</a></li>
-    <li><a class="dropdown-item" href="articles/3_distributing_content.html">Distributing Content</a></li>
+<li><a class="dropdown-item" href="articles/distributing_content.html">Distributing Content</a></li>
     <li><a class="dropdown-item" href="articles/example_1_inaturalist_summary.html">Example: iNaturalist Summary</a></li>
+    <li><a class="dropdown-item" href="articles/generating_content.html">Generating Content</a></li>
+    <li><a class="dropdown-item" href="articles/getting_data.html">Getting Data</a></li>
   </ul>
 </li>
       </ul>
@@ -56,19 +56,33 @@
   <main id="main" class="col-md-9"><div class="section level1">
 <div class="page-header"><h1 id="recorderfeedback">recorderFeedback<a class="anchor" aria-label="anchor" href="#recorderfeedback"></a>
 </h1></div>
-<p><code>recorderFeedback</code> helps you run an end-to-end feedback workflow in R:</p>
+<p><a href="https://github.com/simonrolph/recorderFeedback" class="external-link"><img src="https://img.shields.io/badge/devel%20version-0.9.0-blue.svg"></a> <a href="https://github.com/simonrolph/recorderFeedback/actions" class="external-link"><img src="https://github.com/simonrolph/recorderFeedback/workflows/R-CMD-check.yaml/badge.svg" alt="R build status"></a></p>
+<p><code>recorderFeedback</code> is an R package for generating personalised, data-driven feedback.</p>
+<p>It was built for wildlife recording and citizen science projects, where teams want to give contributors useful feedback to participants to boost engagement.</p>
+<p>This package helps turn that into a repeatable workflow in R, using the power of R packages for data processing and visualisation.</p>
+<div class="section level2">
+<h2 id="why-it-exists">Why it exists<a class="anchor" aria-label="anchor" href="#why-it-exists"></a>
+</h2>
+<p>In many recording schemes, data arrives continuously but feedback to contributors is irregular. The bottleneck is usually time: preparing personalised feedback manually does not scale.</p>
+<p><code>recorderFeedback</code> provides a practical way to close that gap, so contributors hear back consistently rather than occasionally. This does not intend to replace peer-to-peer or personal feedback, but to complement it with regular, data-driven updates at scale.</p>
+</div>
+<div class="section level2">
+<h2 id="in-practice">In practice<a class="anchor" aria-label="anchor" href="#in-practice"></a>
+</h2>
+<p>With <code>recorderFeedback</code>, you can build a workdow that runs on a schedule (e.g. monthly) to:</p>
 <ul>
-<li>collect recipients and data</li>
+<li>collate data about recipients and their records from an external data source (e.g. your database or an API))</li>
 <li>compute recipient-level summaries</li>
-<li>render personalised HTML feedback</li>
-<li>dispatch feedback by email (with safety checks and logs)</li>
+<li>render personalised feedback as HTML files</li>
+<li>dispatch feedback by email</li>
 </ul>
 <p>It was designed for wildlife recording and citizen science, but the workflow is general and can be adapted to other domains.</p>
 <p>All exported functions are prefixed with <code>rf_</code>.</p>
+</div>
 <div class="section level2">
-<h2 id="what-the-package-does">What the package does<a class="anchor" aria-label="anchor" href="#what-the-package-does"></a>
+<h2 id="core-functions">Core functions<a class="anchor" aria-label="anchor" href="#core-functions"></a>
 </h2>
-<p>The package provides opinionated building blocks for a repeatable campaign workflow:</p>
+<p>The package provides a clear set of functions for running this workflow from start to finish:</p>
 <ul>
 <li>
 <code><a href="reference/rf_init.html">rf_init()</a></code> scaffolds a project structure and starter files.</li>
@@ -256,7 +270,8 @@
   </main><aside class="col-md-3"><div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>OGL</li>
+<li>file <a href="LICENSE-text.html">LICENSE</a>
+</li>
 </ul>
 </div>
 

@@ -1,21 +1,50 @@
 # recorderFeedback
 
-`recorderFeedback` helps you run an end-to-end feedback workflow in R:
+[![](https://img.shields.io/badge/devel%20version-0.9.0-blue.svg)](https://github.com/simonrolph/recorderFeedback)
+[![R build
+status](https://github.com/simonrolph/recorderFeedback/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/simonrolph/recorderFeedback/actions)
 
-- collect recipients and data
+`recorderFeedback` is an R package for generating personalised,
+data-driven feedback.
+
+It was built for wildlife recording and citizen science projects, where
+teams want to give contributors useful feedback to participants to boost
+engagement.
+
+This package helps turn that into a repeatable workflow in R, using the
+power of R packages for data processing and visualisation.
+
+## Why it exists
+
+In many recording schemes, data arrives continuously but feedback to
+contributors is irregular. The bottleneck is usually time: preparing
+personalised feedback manually does not scale.
+
+`recorderFeedback` provides a practical way to close that gap, so
+contributors hear back consistently rather than occasionally. This does
+not intend to replace peer-to-peer or personal feedback, but to
+complement it with regular, data-driven updates at scale.
+
+## In practice
+
+With `recorderFeedback`, you can build a workdow that runs on a schedule
+(e.g. monthly) to:
+
+- collate data about recipients and their records from an external data
+  source (e.g. your database or an API))
 - compute recipient-level summaries
-- render personalised HTML feedback
-- dispatch feedback by email (with safety checks and logs)
+- render personalised feedback as HTML files
+- dispatch feedback by email
 
 It was designed for wildlife recording and citizen science, but the
 workflow is general and can be adapted to other domains.
 
 All exported functions are prefixed with `rf_`.
 
-## What the package does
+## Core functions
 
-The package provides opinionated building blocks for a repeatable
-campaign workflow:
+The package provides a clear set of functions for running this workflow
+from start to finish:
 
 - [`rf_init()`](https://simonrolph.github.io/recorderFeedback/reference/rf_init.md)
   scaffolds a project structure and starter files.
