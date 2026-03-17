@@ -4,13 +4,11 @@ output: github_document
 
 # recorderFeedback
 
-`r badger::badge_devel("simonrolph/recorderFeedback", "blue")`
-
-`r badger::badge_github_actions("simonrolph/recorderFeedback")`
+`r badger::badge_devel("simonrolph/recorderFeedback", "blue")` `r badger::badge_github_actions("simonrolph/recorderFeedback","R-CMD-check.yaml")`
 
 `recorderFeedback` is an R package for generating personalised, data-driven feedback.
 
-It was built for wildlife recording and citizen science projects, where teams want to give contributors useful feedback but cannot keep doing it by hand.
+It was built for wildlife recording and citizen science projects, where teams want to give contributors useful feedback to participants to boost engagement.
 
 This package helps turn that into a repeatable workflow in R, using the power of R packages for data processing and visualisation.
 

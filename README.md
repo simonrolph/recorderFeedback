@@ -2,16 +2,15 @@
 # recorderFeedback
 
 [![](https://img.shields.io/badge/devel%20version-0.9.0-blue.svg)](https://github.com/simonrolph/recorderFeedback)
-
 [![R build
-status](https://github.com/simonrolph/recorderFeedback/workflows/R-CMD-check/badge.svg)](https://github.com/simonrolph/recorderFeedback/actions)
+status](https://github.com/simonrolph/recorderFeedback/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/simonrolph/recorderFeedback/actions)
 
 `recorderFeedback` is an R package for generating personalised,
 data-driven feedback.
 
 It was built for wildlife recording and citizen science projects, where
-teams want to give contributors useful feedback but cannot keep doing it
-by hand.
+teams want to give contributors useful feedback to participants to boost
+engagement.
 
 This package helps turn that into a repeatable workflow in R, using the
 power of R packages for data processing and visualisation.
