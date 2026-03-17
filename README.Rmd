@@ -4,7 +4,7 @@ output: github_document
 
 # recorderFeedback
 
-`r badger::badge_devel("simonrolph/recorderFeedback", "blue")` `r badger::badge_github_actions("simonrolph/recorderFeedback","R-CMD-check.yaml")`
+`r badger::badge_devel("BiologicalRecordsCentre/recorderFeedback", "blue")` `r badger::badge_github_actions("BiologicalRecordsCentre/recorderFeedback","R-CMD-check.yaml")`
 
 `recorderFeedback` is an R package for generating personalised, data-driven feedback.
 
